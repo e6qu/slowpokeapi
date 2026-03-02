@@ -24,9 +24,9 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 1 | Project Foundation | ✅ Complete |
 | 2 | OpenAPI & Swagger UI | ✅ Complete |
 | 3 | Prometheus Metrics | ✅ Complete |
-| 4 | SQLite Storage Layer | 🔄 In Progress |
-| 5 | Data Models | Pending |
-| 6 | Cache Layer | Pending |
+| 4 | SQLite Storage Layer | ✅ Complete |
+| 5 | Data Models | ✅ Complete |
+| 6 | Cache Layer | 🔄 In Progress |
 | 7 | Upstream API Clients | Pending |
 | 8 | Currencies Endpoint | Pending |
 | 9 | Latest Rates Endpoint | Pending |
@@ -46,6 +46,6 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 ## Current Phase
 
-**Phase 4: SQLite Storage Layer** (In Progress)
+**Phase 6: Cache Layer** (In Progress)
 
 See `DO_NEXT.md` for tasks.

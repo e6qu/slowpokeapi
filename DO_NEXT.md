@@ -1,104 +1,98 @@
 # Do Next
 
-## Phase 4: SQLite Storage Layer
+## Phase 6: Cache Layer
 
 ### Goal
 
-Implement SQLite database with migrations and repository pattern.
+Implement in-memory and SQLite caching with two-tier architecture.
 
 ### Tasks
 
 | # | Task | Files | Status |
 |---|------|-------|--------|
-| 4.1 | Add sqlx and dependencies | `Cargo.toml` | Pending |
-| 4.2 | Create migrations directory | `migrations/001_initial.sql` | Pending |
-| 4.3 | Create rates table migration | `migrations/002_rates.sql` | Pending |
-| 4.4 | Create historical rates migration | `migrations/003_historical.sql` | Pending |
-| 4.5 | Create sync state migration | `migrations/004_sync_state.sql` | Pending |
-| 4.6 | Implement storage module | `src/storage/mod.rs` | Pending |
-| 4.7 | Implement SQLite connection pool | `src/storage/sqlite.rs` | Pending |
-| 4.8 | Create rates repository | `src/storage/repositories/rates.rs` | Pending |
-| 4.9 | Create historical repository | `src/storage/repositories/historical.rs` | Pending |
-| 4.10 | Add database health check | `src/storage/health.rs` | Pending |
-| 4.11 | Test storage operations | `tests/storage.rs` | Pending |
+| 6.1 | Add moka cache dependency | `Cargo.toml` | Pending |
+| 6.2 | Create cache module | `src/cache/mod.rs` | Pending |
+| 6.3 | Define Cache trait | `src/cache/mod.rs` | Pending |
+| 6.4 | Implement memory cache | `src/cache/memory.rs` | Pending |
+| 6.5 | Implement SQLite cache | `src/cache/sqlite.rs` | Pending |
+| 6.6 | Implement tiered cache | `src/cache/tiered.rs` | Pending |
+| 6.7 | Add cache metrics | `src/cache/metrics.rs` | Pending |
+| 6.8 | Integrate with AppState | `src/server/state.rs` | Pending |
+| 6.9 | Test cache operations | `tests/cache.rs` | Pending |
 
 ### Task Details
 
-#### 4.1 - Add sqlx Dependencies
+#### 6.1 - Add moka Cache Dependency
 Add to `Cargo.toml`:
-- `sqlx` with sqlite runtime-tokio features
-- Enable offline mode for CI
-
-#### 4.2 - Create Migrations Directory
-Create `migrations/` directory with initial schema.
-
-#### 4.3 - Create Rates Table Migration
-Create `migrations/002_rates.sql`:
-```sql
-CREATE TABLE rates (
-    base_currency TEXT NOT NULL,
-    target_currency TEXT NOT NULL,
-    rate REAL NOT NULL,
-    timestamp INTEGER NOT NULL,
-    PRIMARY KEY (base_currency, target_currency)
-);
+```toml
+moka = { version = "0.12", features = ["sync"] }
 ```
 
-#### 4.4 - Create Historical Rates Migration
-Create `migrations/003_historical.sql`:
-```sql
-CREATE TABLE historical_rates (
-    date TEXT NOT NULL,
-    base_currency TEXT NOT NULL,
-    target_currency TEXT NOT NULL,
-    rate REAL NOT NULL,
-    PRIMARY KEY (date, base_currency, target_currency)
-);
+#### 6.2 - Create Cache Module
+Create `src/cache/mod.rs` with module structure.
+
+#### 6.3 - Define Cache Trait
+```rust
+#[async_trait]
+pub trait Cache<K, V>: Send + Sync {
+    async fn get(&self, key: &K) -> Result<Option<V>>;
+    async fn set(&self, key: K, value: V, ttl: Option<Duration>) -> Result<()>;
+    async fn delete(&self, key: &K) -> Result<()>;
+    async fn clear(&self) -> Result<()>;
+}
 ```
 
-#### 4.5 - Create Sync State Migration
-Create `migrations/004_sync_state.sql`:
-```sql
-CREATE TABLE sync_state (
-    id INTEGER PRIMARY KEY,
-    last_sync INTEGER NOT NULL,
-    node_id TEXT NOT NULL
-);
-```
+#### 6.4 - Implement Memory Cache
+Create `src/cache/memory.rs`:
+- Use moka for in-memory caching
+- TTL support
+- Size-based eviction
 
-#### 4.6 - Implement Storage Module
-Create `src/storage/mod.rs` with repository traits.
+#### 6.5 - Implement SQLite Cache
+Create `src/cache/sqlite.rs`:
+- Use existing SQLite connection pool
+- TTL via timestamp column
+- Periodic cleanup of expired entries
 
-#### 4.7 - Implement SQLite Connection Pool
-Create `src/storage/sqlite.rs`:
-- Connection pool management
-- Migration runner
+#### 6.6 - Implement Tiered Cache
+Create `src/cache/tiered.rs`:
+- L1: Memory cache (fast, limited)
+- L2: SQLite cache (slower, persistent)
+- Read-through, write-through
 
-#### 4.8 - Create Rates Repository
-Create `src/storage/repositories/rates.rs`:
-- CRUD operations for rates
+#### 6.7 - Add Cache Metrics
+Create `src/cache/metrics.rs`:
+- Cache hits/misses
+- Cache evictions
+- Cache size
+- Average latency
 
-#### 4.9 - Create Historical Repository
-Create `src/storage/repositories/historical.rs`:
-- CRUD operations for historical rates
+#### 6.8 - Integrate with AppState
+Update `src/server/state.rs`:
+- Add cache to AppState
+- Configure from settings
 
-#### 4.10 - Add Database Health Check
-Update health check to verify database connectivity.
-
-#### 4.11 - Test Storage Operations
-Create integration tests for storage layer.
+#### 6.9 - Test Cache Operations
+Create `tests/cache.rs`:
+- Test memory cache
+- Test SQLite cache
+- Test tiered cache
+- Test TTL expiration
+- Test cache eviction
 
 ### Deliverables
 
-- SQLite database with migrations
-- Repository traits and implementations
-- Database health check integration
+- Two-tier caching (memory → SQLite)
+- TTL management
+- Cache metrics
 
 ### Acceptance Criteria
 
-- [ ] Migrations run successfully
-- [ ] Repository operations work
-- [ ] Health check includes database
+- [ ] Cache trait defined
+- [ ] Memory cache implemented with moka
+- [ ] SQLite cache implemented
+- [ ] Tiered cache coordinates both
+- [ ] Cache metrics exposed
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -111,17 +105,18 @@ cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
+# Run and verify metrics include cache stats
 cargo run &
-curl http://localhost:8080/health | jq .checks.database
+curl http://localhost:8080/metrics | grep slowpokeapi_cache
 ```
 
 ### After Completion
 
-1. Update PLAN.md - Mark Phase 4 complete
-2. Update STATUS.md - Move to Phase 5
-3. Update WHAT_WE_DID.md - Document Phase 4
-4. Update DO_NEXT.md - Set up Phase 5 tasks
-5. Move `tasks/phase4/*.md` to `tasks/done/phase4/`
-6. Create feature branch for Phase 5
+1. Update PLAN.md - Mark Phase 6 complete
+2. Update STATUS.md - Move to Phase 7
+3. Update WHAT_WE_DID.md - Document Phase 6
+4. Update DO_NEXT.md - Set up Phase 7 tasks
+5. Move `tasks/phase6/*.md` to `tasks/done/phase6/`
+6. Create feature branch for Phase 7
 7. Create PR
 8. Ensure CI passes
