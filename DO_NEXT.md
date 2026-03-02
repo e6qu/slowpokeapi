@@ -1,115 +1,98 @@
 # Do Next
 
-## Phase 5: Data Models
+## Phase 6: Cache Layer
 
 ### Goal
 
-Implement all domain models and API request/response types with validation and OpenAPI schemas.
+Implement in-memory and SQLite caching with two-tier architecture.
 
 ### Tasks
 
 | # | Task | Files | Status |
 |---|------|-------|--------|
-| 5.1 | Create Currency model | `src/models/currency.rs` | Pending |
-| 5.2 | Create ExchangeRate model | `src/models/rate.rs` | Pending |
-| 5.3 | Create HistoricalRate model | `src/models/historical.rs` | Pending |
-| 5.4 | Create CurrencyMetadata model | `src/models/metadata.rs` | Pending |
-| 5.5 | Create API response types | `src/models/api/response.rs` | Pending |
-| 5.6 | Create error types with API mapping | `src/models/error.rs` | Pending |
-| 5.7 | Add validation logic | `src/models/validation.rs` | Pending |
-| 5.8 | Add OpenAPI schemas to all models | Various | Pending |
-| 5.9 | Test model serialization | `tests/models.rs` | Pending |
+| 6.1 | Add moka cache dependency | `Cargo.toml` | Pending |
+| 6.2 | Create cache module | `src/cache/mod.rs` | Pending |
+| 6.3 | Define Cache trait | `src/cache/mod.rs` | Pending |
+| 6.4 | Implement memory cache | `src/cache/memory.rs` | Pending |
+| 6.5 | Implement SQLite cache | `src/cache/sqlite.rs` | Pending |
+| 6.6 | Implement tiered cache | `src/cache/tiered.rs` | Pending |
+| 6.7 | Add cache metrics | `src/cache/metrics.rs` | Pending |
+| 6.8 | Integrate with AppState | `src/server/state.rs` | Pending |
+| 6.9 | Test cache operations | `tests/cache.rs` | Pending |
 
 ### Task Details
 
-#### 5.1 - Create Currency Model
-Create `src/models/currency.rs`:
+#### 6.1 - Add moka Cache Dependency
+Add to `Cargo.toml`:
+```toml
+moka = { version = "0.12", features = ["sync"] }
+```
+
+#### 6.2 - Create Cache Module
+Create `src/cache/mod.rs` with module structure.
+
+#### 6.3 - Define Cache Trait
 ```rust
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Currency {
-    pub code: String,
-    pub name: String,
-    pub symbol: Option<String>,
+#[async_trait]
+pub trait Cache<K, V>: Send + Sync {
+    async fn get(&self, key: &K) -> Result<Option<V>>;
+    async fn set(&self, key: K, value: V, ttl: Option<Duration>) -> Result<()>;
+    async fn delete(&self, key: &K) -> Result<()>;
+    async fn clear(&self) -> Result<()>;
 }
 ```
 
-#### 5.2 - Create ExchangeRate Model
-Create `src/models/rate.rs`:
-```rust
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ExchangeRate {
-    pub base: String,
-    pub date: String,
-    pub rates: HashMap<String, f64>,
-}
-```
+#### 6.4 - Implement Memory Cache
+Create `src/cache/memory.rs`:
+- Use moka for in-memory caching
+- TTL support
+- Size-based eviction
 
-#### 5.3 - Create HistoricalRate Model
-Create `src/models/historical.rs`:
-```rust
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct HistoricalRate {
-    pub date: String,
-    pub base: String,
-    pub rates: HashMap<String, f64>,
-}
-```
+#### 6.5 - Implement SQLite Cache
+Create `src/cache/sqlite.rs`:
+- Use existing SQLite connection pool
+- TTL via timestamp column
+- Periodic cleanup of expired entries
 
-#### 5.4 - Create CurrencyMetadata Model
-Create `src/models/metadata.rs`:
-```rust
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CurrencyMetadata {
-    pub code: String,
-    pub name: String,
-    pub symbol: Option<String>,
-    pub decimal_places: u8,
-    pub country: Option<String>,
-}
-```
+#### 6.6 - Implement Tiered Cache
+Create `src/cache/tiered.rs`:
+- L1: Memory cache (fast, limited)
+- L2: SQLite cache (slower, persistent)
+- Read-through, write-through
 
-#### 5.5 - Create API Response Types
-Create `src/models/api/response.rs`:
-- `CurrenciesResponse` - List of supported currencies
-- `LatestRatesResponse` - Latest exchange rates
-- `HistoricalRatesResponse` - Historical rates
-- `ConvertResponse` - Currency conversion result
-- `ErrorResponse` - API error response
+#### 6.7 - Add Cache Metrics
+Create `src/cache/metrics.rs`:
+- Cache hits/misses
+- Cache evictions
+- Cache size
+- Average latency
 
-#### 5.6 - Create Error Types with API Mapping
-Update `src/models/error.rs`:
-- Map domain errors to HTTP status codes
-- Add API error response generation
-- Add validation errors
+#### 6.8 - Integrate with AppState
+Update `src/server/state.rs`:
+- Add cache to AppState
+- Configure from settings
 
-#### 5.7 - Add Validation Logic
-Create `src/models/validation.rs`:
-- Currency code validation (ISO 4217)
-- Date format validation
-- Rate value validation
-- Request parameter validation
-
-#### 5.8 - Add OpenAPI Schemas
-Add `ToSchema` derive to all models and `utoipa::path` to response types.
-
-#### 5.9 - Test Model Serialization
-Create `tests/models.rs`:
-- Test JSON serialization/deserialization
-- Test validation logic
-- Test edge cases
+#### 6.9 - Test Cache Operations
+Create `tests/cache.rs`:
+- Test memory cache
+- Test SQLite cache
+- Test tiered cache
+- Test TTL expiration
+- Test cache eviction
 
 ### Deliverables
 
-- All domain models with validation
-- API request/response types
-- OpenAPI schema annotations
-- Comprehensive test coverage
+- Two-tier caching (memory → SQLite)
+- TTL management
+- Cache metrics
 
 ### Acceptance Criteria
 
-- [ ] All models have ToSchema derive
-- [ ] Models validate input correctly
-- [ ] Error types map to HTTP status codes
+- [ ] Cache trait defined
+- [ ] Memory cache implemented with moka
+- [ ] SQLite cache implemented
+- [ ] Tiered cache coordinates both
+- [ ] Cache metrics exposed
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -122,18 +105,18 @@ cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
-# Check OpenAPI schema
+# Run and verify metrics include cache stats
 cargo run &
-curl http://localhost:8080/api-docs/openapi.json | jq '.components.schemas'
+curl http://localhost:8080/metrics | grep slowpokeapi_cache
 ```
 
 ### After Completion
 
-1. Update PLAN.md - Mark Phase 5 complete
-2. Update STATUS.md - Move to Phase 6
-3. Update WHAT_WE_DID.md - Document Phase 5
-4. Update DO_NEXT.md - Set up Phase 6 tasks
-5. Move `tasks/phase5/*.md` to `tasks/done/phase5/`
-6. Create feature branch for Phase 6
+1. Update PLAN.md - Mark Phase 6 complete
+2. Update STATUS.md - Move to Phase 7
+3. Update WHAT_WE_DID.md - Document Phase 6
+4. Update DO_NEXT.md - Set up Phase 7 tasks
+5. Move `tasks/phase6/*.md` to `tasks/done/phase6/`
+6. Create feature branch for Phase 7
 7. Create PR
 8. Ensure CI passes

@@ -2,38 +2,34 @@
 
 ## Current State
 
-**Phase:** 5 (Data Models) - Starting
+**Phase:** 6 (Cache Layer) - Starting
 **Branch:** main (will create feature branch)
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-03-03
 
-## Phase 4 Completed ✅
+## Phase 5 Completed ✅
 
-- [x] 4.1 - Add sqlx and dependencies
-- [x] 4.2 - Create migrations directory
-- [x] 4.3 - Create rates table migration
-- [x] 4.4 - Create historical rates migration
-- [x] 4.5 - Create sync state migration
-- [x] 4.6 - Implement storage module
-- [x] 4.7 - Implement SQLite connection pool
-- [x] 4.8 - Create rates repository
-- [x] 4.9 - Create historical repository
-- [x] 4.10 - Add database health check
-- [x] 4.11 - Test storage operations
+- [x] 5.1 - Create Currency model
+- [x] 5.2 - Create ExchangeRate model
+- [x] 5.3 - Create HistoricalRate model
+- [x] 5.4 - Create CurrencyMetadata model
+- [x] 5.5 - Create API response types
+- [x] 5.6 - Create error types with API mapping
+- [x] 5.7 - Add validation logic
+- [x] 5.8 - Add OpenAPI schemas to all models
+- [x] 5.9 - Test model serialization
 
-**PR #7 Merged:** https://github.com/e6qu/slowpokeapi/pull/7
+**PR #8 Merged:** (pending)
 
-## Phase 5 Progress
+## Phase 6 Progress
 
 ### Tasks
-- [ ] 5.1 - Create Currency model
-- [ ] 5.2 - Create ExchangeRate model
-- [ ] 5.3 - Create HistoricalRate model
-- [ ] 5.4 - Create CurrencyMetadata model
-- [ ] 5.5 - Create API response types
-- [ ] 5.6 - Create error types with API mapping
-- [ ] 5.7 - Add validation logic
-- [ ] 5.8 - Add OpenAPI schemas to all models
-- [ ] 5.9 - Test model serialization
+- [ ] 6.1 - Add moka dependency
+- [ ] 6.2 - Create cache module
+- [ ] 6.3 - Implement in-memory cache with moka
+- [ ] 6.4 - Create cache configuration
+- [ ] 6.5 - Implement cache statistics
+- [ ] 6.6 - Add cache invalidation
+- [ ] 6.7 - Test cache operations
 
 ## Blocked
 

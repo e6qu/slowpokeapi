@@ -1,5 +1,58 @@
 # What We Did
 
+## 2026-03-03: Phase 5 Complete - Data Models ✅
+
+### PR #8: Data Models
+
+**Merged:** (pending)
+
+#### Completed Tasks
+
+1. **Currency Model**
+   - Created `src/models/currency.rs` with `Currency` struct
+   - Added `CurrencyType` enum (Fiat, Crypto, Metal)
+   - Added type check methods (is_fiat, is_crypto, is_metal)
+
+2. **ExchangeRate Model**
+   - Created `src/models/rate.rs` with `ExchangeRate` and `RateCollection`
+   - Added `Source` enum for rate sources (Frankfurter, FawazAhmed, CoinGecko, CoinCap, Cached)
+   - Used `DateTime<Utc>` for timestamps
+
+3. **HistoricalRate Model**
+   - Created `src/models/historical.rs`
+   - Used `NaiveDate` for historical dates
+
+4. **CurrencyMetadata Model**
+   - Created `src/models/metadata.rs`
+   - Full metadata including locale, country code, display symbol, flag URL
+
+5. **API Response Types**
+   - Created `src/models/api/response.rs`
+   - `LatestRatesResponse`, `PairResponse`, `HistoricalResponse`
+   - `EnrichedResponse`, `QuotaResponse`, `CurrenciesResponse`
+   - `ErrorResponse` with `ErrorType` enum
+
+6. **Error Types with API Mapping**
+   - Updated `src/models/error.rs`
+   - Added `to_error_response()` method
+   - Added `status_code()` method
+   - Implemented `IntoResponse` for Axum integration
+
+7. **Validation Logic**
+   - Created `src/models/validation.rs`
+   - `ValidationError` enum for validation errors
+
+8. **OpenAPI Schemas**
+   - Added `chrono` feature to utoipa for DateTime/NaiveDate support
+   - All models have `ToSchema` derive
+
+9. **Tests**
+   - Created `tests/models.rs` with 17 tests
+   - Tests for serialization roundtrips
+   - Tests for error status codes and responses
+
+---
+
 ## 2026-03-02: Phase 4 Complete - SQLite Storage Layer ✅
 
 ### PR #7: SQLite Storage Layer
