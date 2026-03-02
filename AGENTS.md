@@ -2,6 +2,36 @@
 
 This document defines the workflow and conventions for AI agents working on SlowPokeAPI.
 
+## Branch Management Requirements
+
+**CRITICAL:** Before starting any work on a phase or opening a PR:
+
+1. **Sync local `main` with `origin/main`:**
+   ```bash
+   git checkout main
+   git fetch origin
+   git reset --hard origin/main
+   ```
+
+2. **Always create feature branch from synced `main`:**
+   ```bash
+   git checkout -b phase{N}/feature-name
+   ```
+
+3. **Rebase on `origin/main` before opening PR:**
+   ```bash
+   git fetch origin
+   git rebase origin/main
+   # Resolve any conflicts
+   git push origin <branch> --force-with-lease
+   ```
+
+4. **Delete old branches after PR merge:**
+   ```bash
+   git branch -D <old-branch>
+   git push origin --delete <old-branch>  # if pushed
+   ```
+
 ## Workflow
 
 ### Phase Execution
@@ -10,6 +40,7 @@ Each implementation phase follows this sequence:
 
 ```
 1. Plan the phase
+   ├── Sync main: git checkout main && git reset --hard origin/main
    ├── Read specs/implementation/phases.md for phase details
    ├── Update PLAN.md, STATUS.md, WHAT_WE_DID.md, DO_NEXT.md
    ├── Create task files in tasks/phase{N}/
@@ -39,7 +70,8 @@ Each implementation phase follows this sequence:
    └── Move completed phase tasks to tasks/done/phase{N}/
 
 6. Create PR
-   ├── Ensure on feature branch rebased from origin/main
+   ├── Rebase on origin/main: git fetch origin && git rebase origin/main
+   ├── Resolve any merge conflicts
    ├── Commit all changes
    ├── Push to origin using: git push origin <branch>
    ├── Create PR using: gh pr create
