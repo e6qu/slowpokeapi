@@ -1,5 +1,45 @@
 # What We Did
 
+## 2026-03-02: Phase 3 Complete - Prometheus Metrics ✅
+
+### PR #6: Prometheus Metrics
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/6
+
+#### Completed Tasks
+
+1. **Dependencies**
+   - Added `prometheus` 0.14
+   - Added `axum-prometheus` 0.7
+   - Added `once_cell` 1
+
+2. **Metrics Module**
+   - Created `src/metrics/mod.rs`
+   - Created `src/metrics/definitions.rs`
+   - Configured `slowpokeapi_` prefix for all metrics
+
+3. **HTTP Request Metrics**
+   - `slowpokeapi_http_requests_total` - Counter
+   - `slowpokeapi_http_requests_duration_seconds` - Histogram
+   - `slowpokeapi_http_requests_pending` - Gauge
+
+4. **Metrics Endpoint**
+   - `/metrics` serving Prometheus text format
+   - Added OpenAPI annotation
+
+5. **Integration Tests**
+   - Tests for metrics endpoint format
+   - Tests for HTTP request metrics
+
+6. **Security Fixes**
+   - Upgraded prometheus to fix RUSTSEC-2024-0437
+   - Upgraded reqwest to fix RUSTSEC-2025-0134
+
+7. **Documentation**
+   - Updated AGENTS.md with branch management requirements
+
+---
+
 ## 2026-03-02: Phase 2 Complete - OpenAPI & Swagger UI ✅
 
 ### PR #5: OpenAPI & Swagger UI
@@ -130,6 +170,6 @@ Created comprehensive specifications in `specs/`:
 
 ---
 
-## Next: Phase 3 - Prometheus Metrics
+## Next: Phase 4 - SQLite Storage Layer
 
-Adding Prometheus metrics endpoint with HTTP request metrics.
+Implementing SQLite database with migrations and repository pattern.
