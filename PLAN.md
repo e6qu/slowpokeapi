@@ -20,7 +20,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Project Foundation | Pending |
+| 0 | Specs & Workflow Setup | ✅ Complete |
+| 1 | Project Foundation | 🔄 In Progress |
 | 2 | OpenAPI & Swagger UI | Pending |
 | 3 | Prometheus Metrics | Pending |
 | 4 | SQLite Storage Layer | Pending |
@@ -43,17 +44,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 21 | CI/CD Pipeline | Pending |
 | 22 | Documentation & Final Polish | Pending |
 
-## Specifications
-
-See `specs/` directory for detailed specifications:
-- `specs/architecture/` - System architecture and CRDT sync
-- `specs/api/` - OpenAPI schema, health, and metrics specs
-- `specs/data/` - Data models and SQLite schema
-- `specs/deployment/` - Binary, container, Helm, and Terraform specs
-- `specs/implementation/phases.md` - Detailed phase breakdown
-
 ## Current Phase
 
-**Phase 1: Project Foundation**
+**Phase 1: Project Foundation** (In Progress)
 
-See `DO_NEXT.md` for detailed tasks.
+See `DO_NEXT.md` for remaining tasks.

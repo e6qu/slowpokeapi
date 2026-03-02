@@ -49,7 +49,7 @@ Each implementation phase follows this sequence:
 
 7. Sync main
    ├── Switch to main: git checkout main
-   └── Sync: git pull origin main
+   └── Sync: git reset --hard origin/main (use reset after squash merge)
 ```
 
 ### Git Commands
