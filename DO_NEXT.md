@@ -1,98 +1,106 @@
 # Do Next
 
-## Phase 6: Cache Layer
+## Phase 7: Upstream API Clients
 
 ### Goal
 
-Implement in-memory and SQLite caching with two-tier architecture.
+Implement HTTP clients for Frankfurter and fawazahmed0 APIs with fallback and circuit breaker.
 
 ### Tasks
 
 | # | Task | Files | Status |
 |---|------|-------|--------|
-| 6.1 | Add moka cache dependency | `Cargo.toml` | Pending |
-| 6.2 | Create cache module | `src/cache/mod.rs` | Pending |
-| 6.3 | Define Cache trait | `src/cache/mod.rs` | Pending |
-| 6.4 | Implement memory cache | `src/cache/memory.rs` | Pending |
-| 6.5 | Implement SQLite cache | `src/cache/sqlite.rs` | Pending |
-| 6.6 | Implement tiered cache | `src/cache/tiered.rs` | Pending |
-| 6.7 | Add cache metrics | `src/cache/metrics.rs` | Pending |
-| 6.8 | Integrate with AppState | `src/server/state.rs` | Pending |
-| 6.9 | Test cache operations | `tests/cache.rs` | Pending |
+| 7.1 | Add reqwest dependency | `Cargo.toml` | Pending |
+| 7.2 | Create upstream module | `src/upstream/mod.rs` | Pending |
+| 7.3 | Define Upstream trait | `src/upstream/mod.rs` | Pending |
+| 7.4 | Create shared HTTP client | `src/upstream/client.rs` | Pending |
+| 7.5 | Implement Frankfurter client | `src/upstream/frankfurter.rs` | Pending |
+| 7.6 | Implement fawazahmed0 client | `src/upstream/fawaz.rs` | Pending |
+| 7.7 | Create upstream manager with fallback | `src/upstream/manager.rs` | Pending |
+| 7.8 | Add circuit breaker | `src/upstream/circuit_breaker.rs` | Pending |
+| 7.9 | Add upstream metrics | `src/upstream/metrics.rs` | Pending |
+| 7.10 | Test upstream clients | `tests/upstream.rs` | Pending |
 
 ### Task Details
 
-#### 6.1 - Add moka Cache Dependency
-Add to `Cargo.toml`:
+#### 7.1 - Add reqwest Dependency
+Add to `Cargo.toml` (already in dev-dependencies, move to dependencies):
 ```toml
-moka = { version = "0.12", features = ["sync"] }
+reqwest = { version = "0.12", features = ["json"] }
 ```
 
-#### 6.2 - Create Cache Module
-Create `src/cache/mod.rs` with module structure.
+#### 7.2 - Create Upstream Module
+Create `src/upstream/mod.rs` with module structure.
 
-#### 6.3 - Define Cache Trait
+#### 7.3 - Define Upstream Trait
 ```rust
 #[async_trait]
-pub trait Cache<K, V>: Send + Sync {
-    async fn get(&self, key: &K) -> Result<Option<V>>;
-    async fn set(&self, key: K, value: V, ttl: Option<Duration>) -> Result<()>;
-    async fn delete(&self, key: &K) -> Result<()>;
-    async fn clear(&self) -> Result<()>;
+pub trait Upstream: Send + Sync {
+    async fn get_latest_rates(&self, base: &str) -> Result<RateCollection>;
+    async fn get_historical_rates(&self, base: &str, date: NaiveDate) -> Result<HistoricalRate>;
+    fn name(&self) -> &str;
+    fn is_healthy(&self) -> bool;
 }
 ```
 
-#### 6.4 - Implement Memory Cache
-Create `src/cache/memory.rs`:
-- Use moka for in-memory caching
-- TTL support
-- Size-based eviction
+#### 7.4 - Create Shared HTTP Client
+Create `src/upstream/client.rs`:
+- Shared reqwest client with connection pooling
+- Configurable timeout
+- Retry configuration
 
-#### 6.5 - Implement SQLite Cache
-Create `src/cache/sqlite.rs`:
-- Use existing SQLite connection pool
-- TTL via timestamp column
-- Periodic cleanup of expired entries
+#### 7.5 - Implement Frankfurter Client
+Create `src/upstream/frankfurter.rs`:
+- Base URL: https://api.frankfurter.app
+- Latest rates: `/latest?from={base}`
+- Historical: `/{date}..{date}?from={base}`
 
-#### 6.6 - Implement Tiered Cache
-Create `src/cache/tiered.rs`:
-- L1: Memory cache (fast, limited)
-- L2: SQLite cache (slower, persistent)
-- Read-through, write-through
+#### 7.6 - Implement fawazahmed0 Client
+Create `src/upstream/fawaz.rs`:
+- Base URL: https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1
+- Latest rates: `/currencies/{base}.json`
+- Extensive currency support including crypto
 
-#### 6.7 - Add Cache Metrics
-Create `src/cache/metrics.rs`:
-- Cache hits/misses
-- Cache evictions
-- Cache size
-- Average latency
+#### 7.7 - Create Upstream Manager
+Create `src/upstream/manager.rs`:
+- Fallback chain: Frankfurter → fawazahmed0
+- Automatic failover on errors
+- Health tracking
 
-#### 6.8 - Integrate with AppState
-Update `src/server/state.rs`:
-- Add cache to AppState
-- Configure from settings
+#### 7.8 - Add Circuit Breaker
+Create `src/upstream/circuit_breaker.rs`:
+- Open after N consecutive failures
+- Half-open after timeout
+- Close on success
 
-#### 6.9 - Test Cache Operations
-Create `tests/cache.rs`:
-- Test memory cache
-- Test SQLite cache
-- Test tiered cache
-- Test TTL expiration
-- Test cache eviction
+#### 7.9 - Add Upstream Metrics
+Create `src/upstream/metrics.rs`:
+- `slowpokeapi_upstream_requests_total`
+- `slowpokeapi_upstream_errors_total`
+- `slowpokeapi_upstream_latency_seconds`
+- `slowpokeapi_upstream_circuit_breaker_state`
+
+#### 7.10 - Test Upstream Clients
+Create `tests/upstream.rs`:
+- Mock HTTP responses for unit tests
+- Test fallback behavior
+- Test circuit breaker
 
 ### Deliverables
 
-- Two-tier caching (memory → SQLite)
-- TTL management
-- Cache metrics
+- HTTP clients for fiat currency APIs
+- Fallback chain (Frankfurter → fawaz)
+- Circuit breaker for fault tolerance
+- Upstream metrics
 
 ### Acceptance Criteria
 
-- [ ] Cache trait defined
-- [ ] Memory cache implemented with moka
-- [ ] SQLite cache implemented
-- [ ] Tiered cache coordinates both
-- [ ] Cache metrics exposed
+- [ ] Upstream trait defined
+- [ ] Frankfurter client implemented
+- [ ] fawazahmed0 client implemented
+- [ ] Fallback manager implemented
+- [ ] Circuit breaker implemented
+- [ ] Metrics exposed
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -105,18 +113,18 @@ cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
-# Run and verify metrics include cache stats
+# Run and verify upstream metrics
 cargo run &
-curl http://localhost:8080/metrics | grep slowpokeapi_cache
+curl http://localhost:8080/metrics | grep slowpokeapi_upstream
 ```
 
 ### After Completion
 
-1. Update PLAN.md - Mark Phase 6 complete
-2. Update STATUS.md - Move to Phase 7
-3. Update WHAT_WE_DID.md - Document Phase 6
-4. Update DO_NEXT.md - Set up Phase 7 tasks
-5. Move `tasks/phase6/*.md` to `tasks/done/phase6/`
-6. Create feature branch for Phase 7
+1. Update PLAN.md - Mark Phase 7 complete
+2. Update STATUS.md - Move to Phase 8
+3. Update WHAT_WE_DID.md - Document Phase 7
+4. Update DO_NEXT.md - Set up Phase 8 tasks
+5. Move `tasks/phase7/*.md` to `tasks/done/phase7/`
+6. Create feature branch for Phase 8
 7. Create PR
 8. Ensure CI passes

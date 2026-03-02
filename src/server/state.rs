@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::cache::RateCache;
 use crate::storage::SqlitePool;
 
 #[derive(Clone)]
@@ -8,6 +9,7 @@ pub struct AppState {
     pub config: Arc<crate::config::Settings>,
     pub start_time: Instant,
     pub db_pool: Option<SqlitePool>,
+    pub rate_cache: Option<Arc<RateCache>>,
 }
 
 impl AppState {
@@ -16,11 +18,14 @@ impl AppState {
             config: Arc::new(config),
             start_time: Instant::now(),
             db_pool: None,
+            rate_cache: None,
         }
     }
 
     pub fn with_db(mut self, pool: SqlitePool) -> Self {
-        self.db_pool = Some(pool);
+        self.db_pool = Some(pool.clone());
+        let cache = crate::cache::create_rate_cache(&self.config.cache, pool);
+        self.rate_cache = Some(Arc::new(cache));
         self
     }
 
