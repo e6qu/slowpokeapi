@@ -21,8 +21,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | Phase | Name | Status |
 |-------|------|--------|
 | 0 | Specs & Workflow Setup | ✅ Complete |
-| 1 | Project Foundation | 🔄 In Progress |
-| 2 | OpenAPI & Swagger UI | Pending |
+| 1 | Project Foundation | ✅ Complete |
+| 2 | OpenAPI & Swagger UI | 🔄 In Progress |
 | 3 | Prometheus Metrics | Pending |
 | 4 | SQLite Storage Layer | Pending |
 | 5 | Data Models | Pending |
@@ -46,6 +46,6 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 ## Current Phase
 
-**Phase 1: Project Foundation** (In Progress)
+**Phase 2: OpenAPI & Swagger UI** (In Progress)
 
-See `DO_NEXT.md` for remaining tasks.
+See `DO_NEXT.md` for tasks.

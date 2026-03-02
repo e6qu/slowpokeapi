@@ -1,5 +1,49 @@
 # What We Did
 
+## 2026-03-02: Phase 1 Complete - Project Foundation ✅
+
+### PR #4: Foundation Complete
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/4
+
+#### Completed Tasks
+
+1. **Directory Structure** (`src/`)
+   - `config/` - Configuration loading with `config` crate
+   - `server/` - Axum router, state, and middleware
+   - `handlers/` - Request handlers
+   - `models/` - Domain models and error types
+
+2. **Configuration Loading**
+   - Environment variable support with `SLOWPOKEAPI_` prefix
+   - Config file support (YAML, TOML, JSON)
+   - Settings struct with defaults
+
+3. **Axum Server**
+   - Modular router with health routes
+   - AppState with Arc for sharing
+   - Tower middleware layers
+
+4. **Health Endpoints**
+   - `/healthz` - Kubernetes liveness probe
+   - `/readyz` - Kubernetes readiness probe
+   - `/livez` - Kubernetes startup probe
+   - `/health` - Deep health check with component status
+
+5. **Error Handling**
+   - Error types module
+   - HTTP error responses
+
+6. **Tests**
+   - Basic tests for health endpoints
+
+7. **CI/CD**
+   - GitHub Actions workflow
+   - Clippy and fmt checks
+   - Test automation
+
+---
+
 ## 2026-03-02: Phase 0 Complete - Specs & Workflow Setup ✅
 
 ### PR #1: Setup - Specs, Workflow Docs, and CI
@@ -42,13 +86,6 @@ Created comprehensive specifications in `specs/`:
 - Added lint configuration (rustfmt.toml, clippy.toml)
 - Added .gitignore for Rust project
 
-#### Initial Rust Project
-
-- Cargo.toml with dependencies (axum, tokio, tracing, etc.)
-- Basic health endpoints (/healthz, /readyz, /livez)
-- Error types module
-- CI passing all checks
-
 #### Technology Decisions
 
 - **Framework:** Axum (web framework)
@@ -61,6 +98,6 @@ Created comprehensive specifications in `specs/`:
 
 ---
 
-## Next: Phase 1 - Project Foundation (Continuing)
+## Next: Phase 2 - OpenAPI & Swagger UI
 
-Completing the remaining Phase 1 tasks to have a fully structured project.
+Adding OpenAPI schema generation and interactive documentation.
