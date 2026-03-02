@@ -1,0 +1,633 @@
+openapi: 3.0.3
+info:
+  title: SlowPokeAPI
+  description: |
+    Currency exchange rate API with support for fiat currencies, cryptocurrencies, and precious metals.
+    
+    A clean-room reimplementation of RapidAPI's currency conversion features.
+  version: 1.0.0
+  contact:
+    name: SlowPokeAPI
+    url: https://github.com/e6qu/slowpokeapi
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.slowpokeapi.io
+    description: Production
+
+tags:
+  - name: currencies
+    description: Currency listing and metadata
+  - name: rates
+    description: Exchange rate operations
+  - name: conversion
+    description: Currency conversion
+  - name: historical
+    description: Historical exchange rates
+  - name: system
+    description: System health and metrics
+
+paths:
+  /v1/currencies:
+    get:
+      tags: [currencies]
+      summary: List all supported currencies
+      description: Returns all available currency codes with their full names
+      operationId: listCurrencies
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+              example:
+                USD: "United States Dollar"
+                EUR: "Euro"
+                GBP: "British Pound Sterling"
+                BTC: "Bitcoin"
+                XAU: "Gold (troy ounce)"
+
+  /v1/currencies.min:
+    get:
+      tags: [currencies]
+      summary: List currency codes only
+      description: Returns only currency codes without names (minimal response)
+      operationId: listCurrenciesMin
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example: ["USD", "EUR", "GBP", "BTC", "XAU"]
+
+  /v1/latest/{base_code}:
+    get:
+      tags: [rates]
+      summary: Get latest exchange rates
+      description: Returns all exchange rates for a given base currency
+      operationId: getLatestRates
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          description: Three-letter currency code (e.g., USD, EUR)
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LatestRatesResponse'
+        '400':
+          description: Invalid currency code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Currency not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/pair/{base_code}/{target_code}:
+    get:
+      tags: [conversion]
+      summary: Get exchange rate for a currency pair
+      operationId: getPairRate
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        - name: target_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairResponse'
+        '400':
+          description: Invalid currency code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/pair/{base_code}/{target_code}/{amount}:
+    get:
+      tags: [conversion]
+      summary: Convert amount between currencies
+      operationId: convertPair
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        - name: target_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        - name: amount
+          in: path
+          required: true
+          description: Amount to convert
+          schema:
+            type: number
+            format: double
+            minimum: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairConversionResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/history/{base_code}/{year}/{month}/{day}:
+    get:
+      tags: [historical]
+      summary: Get historical exchange rates
+      operationId: getHistoricalRates
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1999
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: day
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 31
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalRatesResponse'
+        '400':
+          description: Invalid date or currency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No data for requested date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/history/{base_code}/{year}/{month}/{day}/{amount}:
+    get:
+      tags: [historical]
+      summary: Convert amount using historical rates
+      operationId: convertHistorical
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: day
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalConversionResponse'
+
+  /v1/enriched/{base_code}/{target_code}:
+    get:
+      tags: [rates]
+      summary: Get enriched rate with metadata
+      operationId: getEnrichedRate
+      parameters:
+        - name: base_code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: target_code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichedRateResponse'
+        '400':
+          description: Invalid currency code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/quota:
+    get:
+      tags: [system]
+      summary: Get API quota usage
+      operationId: getQuota
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /healthz:
+    get:
+      tags: [system]
+      summary: Kubernetes liveness probe
+      operationId: healthz
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ok"
+
+  /readyz:
+    get:
+      tags: [system]
+      summary: Kubernetes readiness probe
+      operationId: readyz
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ok"
+        '503':
+          description: Service not ready
+
+  /livez:
+    get:
+      tags: [system]
+      summary: Kubernetes startup probe
+      operationId: livez
+      responses:
+        '200':
+          description: Service is running
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ok"
+
+  /health:
+    get:
+      tags: [system]
+      summary: Deep health check
+      description: Returns detailed health status of all components
+      operationId: health
+      responses:
+        '200':
+          description: Health check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      tags: [system]
+      summary: Prometheus metrics
+      operationId: metrics
+      responses:
+        '200':
+          description: Prometheus text format metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key via Authorization header
+    apiKey:
+      type: apiKey
+      in: query
+      name: api_key
+      description: API key via query parameter
+
+  schemas:
+    LatestRatesResponse:
+      type: object
+      required:
+        - result
+        - base_code
+        - conversion_rates
+      properties:
+        result:
+          type: string
+          enum: [success, error]
+        documentation:
+          type: string
+          format: uri
+        time_last_update_unix:
+          type: integer
+          description: Unix timestamp of last update
+        time_last_update_utc:
+          type: string
+          format: date-time
+        time_next_update_unix:
+          type: integer
+        time_next_update_utc:
+          type: string
+          format: date-time
+        base_code:
+          type: string
+          description: Base currency code
+        conversion_rates:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+
+    PairResponse:
+      type: object
+      required:
+        - result
+        - base_code
+        - target_code
+        - conversion_rate
+      properties:
+        result:
+          type: string
+          enum: [success, error]
+        documentation:
+          type: string
+        time_last_update_unix:
+          type: integer
+        time_last_update_utc:
+          type: string
+        time_next_update_unix:
+          type: integer
+        time_next_update_utc:
+          type: string
+        base_code:
+          type: string
+        target_code:
+          type: string
+        conversion_rate:
+          type: number
+          format: double
+
+    PairConversionResponse:
+      allOf:
+        - $ref: '#/components/schemas/PairResponse'
+        - type: object
+          properties:
+            conversion_result:
+              type: number
+              format: double
+
+    HistoricalRatesResponse:
+      type: object
+      required:
+        - result
+        - base_code
+        - year
+        - month
+        - day
+        - conversion_rates
+      properties:
+        result:
+          type: string
+          enum: [success, error]
+        documentation:
+          type: string
+        year:
+          type: integer
+        month:
+          type: integer
+        day:
+          type: integer
+        base_code:
+          type: string
+        conversion_rates:
+          type: object
+          additionalProperties:
+            type: number
+
+    HistoricalConversionResponse:
+      allOf:
+        - $ref: '#/components/schemas/HistoricalRatesResponse'
+        - type: object
+          properties:
+            amount:
+              type: number
+            conversion_result:
+              type: object
+              additionalProperties:
+                type: number
+
+    EnrichedRateResponse:
+      type: object
+      required:
+        - result
+        - base_code
+        - target_code
+        - conversion_rate
+        - target_data
+      properties:
+        result:
+          type: string
+        time_last_update_unix:
+          type: integer
+        time_last_update_utc:
+          type: string
+        base_code:
+          type: string
+        target_code:
+          type: string
+        conversion_rate:
+          type: number
+        target_data:
+          $ref: '#/components/schemas/CurrencyMetadata'
+
+    CurrencyMetadata:
+      type: object
+      properties:
+        locale:
+          type: string
+        two_letter_code:
+          type: string
+        currency_name:
+          type: string
+        currency_name_short:
+          type: string
+        display_symbol:
+          type: string
+          description: Unicode hex code for symbol
+        flag_url:
+          type: string
+          format: uri
+
+    QuotaResponse:
+      type: object
+      required:
+        - result
+        - quota_used
+        - quota_limit
+        - quota_remaining
+      properties:
+        result:
+          type: string
+        quota_used:
+          type: integer
+        quota_limit:
+          type: integer
+        quota_remaining:
+          type: integer
+        reset_date:
+          type: string
+          format: date
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        checks:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthCheck'
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+
+    HealthCheck:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pass, fail, warn]
+        message:
+          type: string
+        latency_ms:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - result
+        - error_type
+      properties:
+        result:
+          type: string
+          enum: [error]
+        error_type:
+          type: string
+          enum:
+            - unsupported-code
+            - malformed-request
+            - invalid-key
+            - inactive-account
+            - quota-reached
+            - no-data-available
+            - plan-upgrade-required
+            - internal-error
+        message:
+          type: string
