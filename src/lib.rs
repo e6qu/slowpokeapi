@@ -5,6 +5,7 @@ pub mod handlers;
 pub mod metrics;
 pub mod models;
 pub mod server;
+pub mod storage;
 
 pub use config::Settings;
 pub use models::error::{Error, Result};
