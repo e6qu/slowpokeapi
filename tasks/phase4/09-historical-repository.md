@@ -1,7 +1,7 @@
 # Task: Create Historical Repository
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

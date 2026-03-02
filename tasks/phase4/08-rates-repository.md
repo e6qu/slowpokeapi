@@ -1,7 +1,7 @@
 # Task: Create Rates Repository
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

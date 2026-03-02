@@ -1,11 +1,13 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::storage::SqlitePool;
+
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<crate::config::Settings>,
     pub start_time: Instant,
-    pub db_pool: Option<crate::storage::SqlitePool>,
+    pub db_pool: Option<SqlitePool>,
 }
 
 impl AppState {
@@ -17,7 +19,7 @@ impl AppState {
         }
     }
 
-    pub fn with_db(mut self, pool: crate::storage::SqlitePool) -> Self {
+    pub fn with_db(mut self, pool: SqlitePool) -> Self {
         self.db_pool = Some(pool);
         self
     }

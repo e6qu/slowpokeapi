@@ -1,7 +1,7 @@
 # Task: Add sqlx Dependencies
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

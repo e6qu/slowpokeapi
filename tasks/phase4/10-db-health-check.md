@@ -1,7 +1,7 @@
 # Task: Add Database Health Check
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

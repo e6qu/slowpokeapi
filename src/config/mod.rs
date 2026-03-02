@@ -2,7 +2,7 @@
 
 mod settings;
 
-pub use settings::{LoggingConfig, ServerConfig, Settings};
+pub use settings::{DatabaseConfig, LoggingConfig, ServerConfig, Settings};
 
 use config::{Config, ConfigError, Environment, File};
 
@@ -13,6 +13,7 @@ impl Settings {
             .set_default("server.port", 8080)?
             .set_default("logging.level", "info")?
             .set_default("logging.format", "json")?
+            .set_default("database.url", "sqlite::memory:")?
             .add_source(File::with_name("config").required(false))
             .add_source(Environment::with_prefix("SLOWPOKEAPI").separator("__"))
             .build()?;

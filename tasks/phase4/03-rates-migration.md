@@ -1,7 +1,7 @@
 # Task: Create Rates Table Migration
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

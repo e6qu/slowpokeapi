@@ -1,7 +1,7 @@
 # Task: Test Storage Operations
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

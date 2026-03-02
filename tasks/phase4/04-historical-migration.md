@@ -1,7 +1,7 @@
 # Task: Create Historical Rates Migration
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

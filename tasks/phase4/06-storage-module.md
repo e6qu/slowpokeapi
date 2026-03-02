@@ -1,7 +1,7 @@
 # Task: Implement Storage Module
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

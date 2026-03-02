@@ -1,7 +1,7 @@
 # Task: Create Sync State Migration
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

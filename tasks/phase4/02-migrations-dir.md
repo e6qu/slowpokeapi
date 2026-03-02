@@ -1,7 +1,7 @@
 # Task: Create Migrations Directory
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 

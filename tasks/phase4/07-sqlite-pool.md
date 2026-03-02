@@ -1,7 +1,7 @@
 # Task: Implement SQLite Connection Pool
 
 ## Status
-[ ] Pending
+[x] Done
 
 ## Description
 
