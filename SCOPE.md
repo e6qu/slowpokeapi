@@ -182,13 +182,12 @@ GET /v1/quota
 
 ## Supported Currency Types
 
-### Fiat Currencies (~165)
-All ISO 4217 three-letter currency codes including:
+### Fiat Currencies (~33 from ECB/Frankfurter)
+ISO 4217 three-letter currency codes:
 - USD, EUR, GBP, JPY, CHF, CAD, AUD, NZD, CNY, INR, etc.
-- Regional currencies: XAF, XCD, XDR, XOF, XPF
-- See full list in `/data/currencies.json`
+- Full list: AUD, BGN, BRL, CAD, CHF, CNY, CZK, DKK, EUR, GBP, HKD, HUF, IDR, ILS, INR, ISK, JPY, KRW, MXN, MYR, NOK, NZD, PHP, PLN, RON, SEK, SGD, THB, TRY, USD, ZAR
 
-### Cryptocurrencies (~50+)
+### Cryptocurrencies (~50+ via CoinGecko/CoinCap)
 - BTC (Bitcoin)
 - ETH (Ethereum)
 - LTC (Litecoin)
@@ -198,11 +197,11 @@ All ISO 4217 three-letter currency codes including:
 - USDC (USD Coin)
 - And more...
 
-### Precious Metals
-- XAU (Gold - troy ounce)
-- XAG (Silver - troy ounce)
-- XPT (Platinum - troy ounce)
-- XPD (Palladium - troy ounce)
+### Precious Metals (via CoinGecko)
+- XAU (Gold)
+- XAG (Silver)
+- XPT (Platinum)
+- XPD (Palladium)
 
 ---
 
@@ -261,35 +260,28 @@ API key passed via:
 
 ## Third-Party Data Sources
 
-SlowPokeAPI uses **only public, free APIs** with no authentication required:
+SlowPokeAPI uses **only public, free APIs** with no paid services:
 
-### Primary Data Sources
+### Fiat Currency Sources
 
-| Source | Type | Coverage | Update Frequency | License |
-|--------|------|----------|------------------|---------|
-| [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) | Fiat + Crypto + Metals | 200+ currencies | Daily | CC0-1.0 (Public Domain) |
-| [European Central Bank](https://www.ecb.europa.eu/stats/eurofxref/) | Fiat only | 32 currencies | Daily | Free (ECB terms) |
-| [Frankfurter API](https://api.frankfurter.app/) | Fiat only | 30+ currencies | Daily | Free |
+| Source | Coverage | Update Frequency | Auth | Notes |
+|--------|----------|------------------|------|-------|
+| [European Central Bank](https://www.ecb.europa.eu/stats/eurofxref/) | 32 currencies | Daily (around 16:00 CET) | None | Authoritative EU source |
+| [Frankfurter API](https://www.frankfurter.app/) | 30+ currencies | Daily | None | Open-source, ECB-backed |
+| [Open Exchange Rates](https://openexchangerates.org/) | 170+ currencies | Hourly | Free tier | 1,000 requests/month free |
 
-### Crypto Data Sources (Public)
+### Cryptocurrency Sources
 
-| Source | Type | Coverage | Notes |
-|--------|------|----------|-------|
-| [CoinGecko API](https://www.coingecko.com/api/documentation) | Crypto | 10,000+ coins | Free, no API key required (rate limited) |
-| [CoinCap API](https://docs.coincap.io/) | Crypto | 2,000+ coins | Free, no API key needed |
+| Source | Coverage | Auth | Rate Limit | Notes |
+|--------|----------|------|------------|-------|
+| [CoinGecko API](https://www.coingecko.com/api/documentation) | 10,000+ coins | None (free tier) | ~10-50 req/min | Most comprehensive free crypto API |
+| [CoinCap API](https://docs.coincap.io/) | 2,000+ coins | None | Generous | Simple REST API |
 
-### Historical Data Sources
+### Precious Metals Sources
 
-| Source | Coverage | Notes |
-|--------|----------|-------|
-| [Frankfurter API](https://www.frankfurter.app/) | 1999-present | Free ECB-based historical rates |
-| fawazahmed0/exchange-api | Limited historical | Via date-based URL paths |
-
-### Precious Metals Data
-
-| Source | Type | Notes |
-|--------|------|-------|
-| fawazahmed0/exchange-api | XAU, XAG, XPT, XPD | Included in 200+ currencies |
+| Source | Coverage | Auth | Notes |
+|--------|----------|------|-------|
+| CoinGecko API | Gold, Silver, Platinum, Palladium | None | Via crypto-style asset endpoints |
 
 ---
 
@@ -316,50 +308,157 @@ SlowPokeAPI uses **only public, free APIs** with no authentication required:
     └────┬────┘     └────┬────┘
          │               │
     ┌────┴────┐     ┌────┴────┐
-    │fawazah- │     │CoinGecko│
-    │med0 API │     │CoinCap  │
-    │Frankfur-│     └─────────┘
-    │ter API  │
-    │ECB      │
+    │Frankfur-│     │CoinGecko│
+    │ter API  │     │CoinCap  │
+    │ECB XML  │     └─────────┘
     └─────────┘
 ```
 
 ---
 
-## Data Source Priority
+## Data Source Details
 
-### For Latest Rates
-1. **fawazahmed0/exchange-api** (primary) - via jsDelivr CDN
-   - URL: `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{code}.json`
-   - Covers fiat, crypto, and metals
-   - No auth required, no rate limits
+### 1. European Central Bank (ECB)
 
-2. **Frankfurter API** (fallback) - for fiat only
-   - URL: `https://api.frankfurter.app/latest?from={code}`
-   - ECB-sourced rates
-   - No auth required
+**URL:** `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml`
 
-3. **European Central Bank** (fallback) - for EUR base
-   - URL: `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml`
-   - Authoritative source for EUR rates
+**Coverage:** 32 currencies (EUR as base)
 
-### For Historical Rates
-1. **Frankfurter API** (primary for fiat)
-   - URL: `https://api.frankfurter.app/{YYYY-MM-DD}?from={code}`
-   - Historical data from 1999
+**Sample Response:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01">
+  <Cube>
+    <Cube time="2026-03-02">
+      <Cube currency="USD" rate="1.0523"/>
+      <Cube currency="JPY" rate="157.89"/>
+      <Cube currency="GBP" rate="0.8234"/>
+      ...
+    </Cube>
+  </Cube>
+</gesmes:Envelope>
+```
 
-2. **fawazahmed0/exchange-api** (secondary)
-   - URL: `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@{YYYY-MM-DD}/v1/currencies/{code}.json`
-   - Limited historical coverage
+**Historical Data:**
+- Daily rates: `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml`
+- Full history: `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml` (since 1999)
 
-### For Crypto Prices
-1. **CoinGecko API** (primary)
-   - URL: `https://api.coingecko.com/api/v3/simple/price`
-   - Free tier: ~10-30 calls/min
+---
 
-2. **CoinCap API** (fallback)
-   - URL: `https://api.coincap.io/v2/rates`
-   - No auth, generous rate limits
+### 2. Frankfurter API
+
+**URL:** `https://api.frankfurter.app`
+
+**Coverage:** 30+ currencies
+
+**Endpoints:**
+- Latest: `GET /latest?from={code}`
+- Historical: `GET /{YYYY-MM-DD}?from={code}`
+- Currencies: `GET /currencies`
+- Date Range: `GET /{YYYY-MM-DD}..{YYYY-MM-DD}?from={code}`
+
+**Sample Response:**
+```json
+{
+  "amount": 1,
+  "base": "EUR",
+  "date": "2026-03-02",
+  "rates": {
+    "USD": 1.0523,
+    "GBP": 0.8234,
+    "JPY": 157.89
+  }
+}
+```
+
+**Advantages:**
+- Open-source project
+- No authentication required
+- Historical data from 1999
+- Well-maintained
+
+---
+
+### 3. CoinGecko API
+
+**URL:** `https://api.coingecko.com/api/v3`
+
+**Coverage:** 10,000+ cryptocurrencies including metals
+
+**Endpoints:**
+- Simple price: `GET /simple/price?ids=bitcoin,ethereum&vs_currencies=usd,eur`
+- Coin list: `GET /coins/list`
+- Exchange rates: `GET /exchange_rates`
+
+**Sample Response:**
+```json
+{
+  "bitcoin": {
+    "usd": 45000.00,
+    "eur": 42000.00
+  },
+  "ethereum": {
+    "usd": 3000.00,
+    "eur": 2800.00
+  }
+}
+```
+
+**Rate Limits:**
+- Free tier: ~10-50 requests/minute
+- Rate limit headers included in responses
+
+---
+
+### 4. CoinCap API
+
+**URL:** `https://api.coincap.io/v2`
+
+**Coverage:** 2,000+ cryptocurrencies
+
+**Endpoints:**
+- Rates: `GET /rates`
+- Assets: `GET /assets`
+- Single asset: `GET /assets/{id}`
+
+**Sample Response:**
+```json
+{
+  "data": {
+    "id": "bitcoin",
+    "rateUsd": "45000.0000000000000000"
+  }
+}
+```
+
+**Advantages:**
+- No authentication required
+- Generous rate limits
+- Simple JSON responses
+
+---
+
+## Implementation Strategy
+
+### Currency Rate Aggregation
+
+Since fiat and crypto/metal rates come from different sources, SlowPokeAPI must:
+
+1. **Fetch EUR rates from ECB/Frankfurter**
+2. **Fetch crypto/metal prices from CoinGecko/CoinCap** (in USD)
+3. **Calculate cross-rates** for any currency pair
+
+### Example: Converting BTC to EUR
+
+1. Get EUR/USD rate from Frankfurter: `1 EUR = 1.05 USD`
+2. Get BTC/USD price from CoinGecko: `1 BTC = 45000 USD`
+3. Calculate BTC/EUR: `45000 / 1.05 = 42857 EUR`
+
+### Example: Converting GBP to JPY
+
+1. Get all EUR rates from Frankfurter
+2. Extract EUR/GBP and EUR/JPY rates
+3. Calculate cross-rate: `JPY/GBP = (EUR/JPY) / (EUR/GBP)`
 
 ---
 
@@ -367,30 +466,35 @@ SlowPokeAPI uses **only public, free APIs** with no authentication required:
 
 ### Phase 1: Core API (MVP)
 - [ ] List currencies endpoint
-- [ ] Latest exchange rates endpoint
-- [ ] Pair conversion endpoint
+- [ ] Latest exchange rates (fiat only via Frankfurter)
+- [ ] Pair conversion (fiat only)
 - [ ] Basic error handling
 - [ ] In-memory caching
-- [ ] fawazahmed0/exchange-api integration
 
-### Phase 2: Historical Data
+### Phase 2: Cryptocurrency Support
+- [ ] CoinGecko API integration
+- [ ] Crypto/fiat conversion
+- [ ] Precious metals support
+- [ ] CoinCap as fallback
+
+### Phase 3: Historical Data
 - [ ] Historical rates endpoint
-- [ ] Frankfurter API integration
-- [ ] Data storage (SQLite)
-- [ ] Date-based queries
+- [ ] Frankfurter historical API
+- [ ] ECB historical XML parsing
+- [ ] SQLite storage for caching
 
-### Phase 3: Enhanced Features
+### Phase 4: Enhanced Features
 - [ ] Enriched data endpoint
 - [ ] Currency metadata (symbols, names, flags)
 - [ ] Rate limiting per API key
 
-### Phase 4: Authentication & Quotas
+### Phase 5: Authentication & Quotas
 - [ ] API key generation
 - [ ] Usage tracking
 - [ ] Quota management
 - [ ] Plan tiers
 
-### Phase 5: Performance & Reliability
+### Phase 6: Performance & Reliability
 - [ ] Redis caching (optional)
 - [ ] Multiple data source fallbacks
 - [ ] Rate limit headers
@@ -405,8 +509,9 @@ SlowPokeAPI uses **only public, free APIs** with no authentication required:
 | Language | Rust |
 | Web Framework | Axum / Actix-web |
 | Serialization | serde / serde_json |
+| XML Parsing | quick-xml |
 | Caching | moka (in-memory) / Redis (optional) |
-| Database | SQLite (for historical data) |
+| Database | SQLite (for historical data cache) |
 | HTTP Client | reqwest |
 | Async Runtime | tokio |
 
@@ -416,7 +521,8 @@ SlowPokeAPI uses **only public, free APIs** with no authentication required:
 
 - All currency codes use ISO 4217 standard (3 letters, uppercase)
 - Exchange rates are indicative mid-market rates
-- Historical data accuracy depends on data sources
-- All third-party APIs are **free and public** - no paid services
-- Cache responses aggressively to minimize upstream API calls
-- Implement fallback chain for reliability
+- Historical fiat data available from 1999 via ECB
+- All third-party APIs are **free and public** - no paid services required
+- Cache responses aggressively to respect upstream rate limits
+- Implement fallback chain for reliability (Frankfurter → ECB XML)
+- Cross-rate calculations required for non-EUR base currencies
