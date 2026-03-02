@@ -1,24 +1,28 @@
 //! SlowPokeAPI - Currency exchange rate API with distributed sync
 
-use axum::{routing::get, Router};
+use slowpokeapi::{
+    config::Settings,
+    server::{create_router, AppState},
+};
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    let settings = Settings::load().expect("Failed to load configuration");
+
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
+        .with(tracing_subscriber::EnvFilter::new(&settings.logging.level))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new()
-        .route("/healthz", get(|| async { "ok" }))
-        .route("/readyz", get(|| async { "ok" }))
-        .route("/livez", get(|| async { "ok" }));
+    let state = AppState::new(settings.clone());
+    let app = create_router(state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let addr = SocketAddr::new(
+        settings.server.host.parse().expect("Invalid host address"),
+        settings.server.port,
+    );
     tracing::info!("Listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)

@@ -1,5 +1,9 @@
 //! SlowPokeAPI - Currency exchange rate API with distributed sync
 
-pub mod error;
+pub mod config;
+pub mod handlers;
+pub mod models;
+pub mod server;
 
-pub use error::{Error, Result};
+pub use config::Settings;
+pub use models::error::{Error, Result};

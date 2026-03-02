@@ -1,8 +1,12 @@
 # What We Did
 
-## 2026-03-02: Project Setup
+## 2026-03-02: Phase 0 Complete - Specs & Workflow Setup ✅
 
-### Specifications Created
+### PR #1: Setup - Specs, Workflow Docs, and CI
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/1
+
+#### Specifications Created
 
 Created comprehensive specifications in `specs/`:
 
@@ -29,21 +33,23 @@ Created comprehensive specifications in `specs/`:
 5. **Implementation** (`specs/implementation/`)
    - `phases.md` - 22 implementation phases with detailed task breakdown
 
-### Development Workflow
+#### Development Workflow
 
 - Created `AGENTS.md` with AI agent workflow instructions
 - Set up task management structure (`tasks/` and `tasks/done/`)
 - Created crucial tracking files: PLAN.md, STATUS.md, WHAT_WE_DID.md, DO_NEXT.md
-- Added CI workflow with GitHub Actions
+- Added CI workflow with GitHub Actions (fmt, clippy, test, audit)
 - Added lint configuration (rustfmt.toml, clippy.toml)
 - Added .gitignore for Rust project
 
-### Repository Setup
+#### Initial Rust Project
 
-- Committed initial project setup
-- Note: Push to origin requires SSH key configuration
+- Cargo.toml with dependencies (axum, tokio, tracing, etc.)
+- Basic health endpoints (/healthz, /readyz, /livez)
+- Error types module
+- CI passing all checks
 
-### Technology Decisions
+#### Technology Decisions
 
 - **Framework:** Axum (web framework)
 - **CRDT:** automerge-rs for distributed sync
@@ -52,3 +58,9 @@ Created comprehensive specifications in `specs/`:
 - **Upstream APIs:** Frankfurter (primary), fawazahmed0 (fallback), CoinGecko, CoinCap
 - **Metrics:** prometheus + axum-prometheus
 - **OpenAPI:** utoipa + utoipa-swagger-ui
+
+---
+
+## Next: Phase 1 - Project Foundation (Continuing)
+
+Completing the remaining Phase 1 tasks to have a fully structured project.
