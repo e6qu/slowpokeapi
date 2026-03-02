@@ -3,11 +3,14 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::time::Instant;
+use utoipa::ToSchema;
 
 use crate::server::AppState;
 
-#[derive(Debug, Serialize)]
+#[allow(clippy::disallowed_methods)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct HealthResponse {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -15,10 +18,10 @@ pub struct HealthResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uptime_seconds: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub checks: Option<std::collections::HashMap<String, HealthCheck>>,
+    pub checks: Option<HashMap<String, HealthCheck>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct HealthCheck {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,12 +30,29 @@ pub struct HealthCheck {
     pub latency_ms: Option<u64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/healthz",
+    tag = "system",
+    responses(
+        (status = 200, description = "Service is alive", body = String, example = "ok")
+    )
+)]
 pub async fn healthz() -> &'static str {
     "ok"
 }
 
+#[utoipa::path(
+    get,
+    path = "/readyz",
+    tag = "system",
+    responses(
+        (status = 200, description = "Service is ready", body = String),
+        (status = 503, description = "Service not ready", body = String)
+    )
+)]
 pub async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
-    let mut checks = std::collections::HashMap::new();
+    let mut checks = HashMap::new();
     let mut all_healthy = true;
 
     if let Some(db_healthy) = state.db_health() {
@@ -58,12 +78,28 @@ pub async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/livez",
+    tag = "system",
+    responses(
+        (status = 200, description = "Service is running", body = String, example = "ok")
+    )
+)]
 pub async fn livez() -> &'static str {
     "ok"
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "system",
+    responses(
+        (status = 200, description = "Deep health check", body = HealthResponse)
+    )
+)]
 pub async fn health(State(state): State<AppState>) -> impl IntoResponse {
-    let mut checks = std::collections::HashMap::new();
+    let mut checks = HashMap::new();
     let mut overall_status = "healthy";
 
     let start = Instant::now();
