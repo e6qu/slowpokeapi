@@ -1,104 +1,115 @@
 # Do Next
 
-## Phase 4: SQLite Storage Layer
+## Phase 5: Data Models
 
 ### Goal
 
-Implement SQLite database with migrations and repository pattern.
+Implement all domain models and API request/response types with validation and OpenAPI schemas.
 
 ### Tasks
 
 | # | Task | Files | Status |
 |---|------|-------|--------|
-| 4.1 | Add sqlx and dependencies | `Cargo.toml` | Pending |
-| 4.2 | Create migrations directory | `migrations/001_initial.sql` | Pending |
-| 4.3 | Create rates table migration | `migrations/002_rates.sql` | Pending |
-| 4.4 | Create historical rates migration | `migrations/003_historical.sql` | Pending |
-| 4.5 | Create sync state migration | `migrations/004_sync_state.sql` | Pending |
-| 4.6 | Implement storage module | `src/storage/mod.rs` | Pending |
-| 4.7 | Implement SQLite connection pool | `src/storage/sqlite.rs` | Pending |
-| 4.8 | Create rates repository | `src/storage/repositories/rates.rs` | Pending |
-| 4.9 | Create historical repository | `src/storage/repositories/historical.rs` | Pending |
-| 4.10 | Add database health check | `src/storage/health.rs` | Pending |
-| 4.11 | Test storage operations | `tests/storage.rs` | Pending |
+| 5.1 | Create Currency model | `src/models/currency.rs` | Pending |
+| 5.2 | Create ExchangeRate model | `src/models/rate.rs` | Pending |
+| 5.3 | Create HistoricalRate model | `src/models/historical.rs` | Pending |
+| 5.4 | Create CurrencyMetadata model | `src/models/metadata.rs` | Pending |
+| 5.5 | Create API response types | `src/models/api/response.rs` | Pending |
+| 5.6 | Create error types with API mapping | `src/models/error.rs` | Pending |
+| 5.7 | Add validation logic | `src/models/validation.rs` | Pending |
+| 5.8 | Add OpenAPI schemas to all models | Various | Pending |
+| 5.9 | Test model serialization | `tests/models.rs` | Pending |
 
 ### Task Details
 
-#### 4.1 - Add sqlx Dependencies
-Add to `Cargo.toml`:
-- `sqlx` with sqlite runtime-tokio features
-- Enable offline mode for CI
-
-#### 4.2 - Create Migrations Directory
-Create `migrations/` directory with initial schema.
-
-#### 4.3 - Create Rates Table Migration
-Create `migrations/002_rates.sql`:
-```sql
-CREATE TABLE rates (
-    base_currency TEXT NOT NULL,
-    target_currency TEXT NOT NULL,
-    rate REAL NOT NULL,
-    timestamp INTEGER NOT NULL,
-    PRIMARY KEY (base_currency, target_currency)
-);
+#### 5.1 - Create Currency Model
+Create `src/models/currency.rs`:
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct Currency {
+    pub code: String,
+    pub name: String,
+    pub symbol: Option<String>,
+}
 ```
 
-#### 4.4 - Create Historical Rates Migration
-Create `migrations/003_historical.sql`:
-```sql
-CREATE TABLE historical_rates (
-    date TEXT NOT NULL,
-    base_currency TEXT NOT NULL,
-    target_currency TEXT NOT NULL,
-    rate REAL NOT NULL,
-    PRIMARY KEY (date, base_currency, target_currency)
-);
+#### 5.2 - Create ExchangeRate Model
+Create `src/models/rate.rs`:
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ExchangeRate {
+    pub base: String,
+    pub date: String,
+    pub rates: HashMap<String, f64>,
+}
 ```
 
-#### 4.5 - Create Sync State Migration
-Create `migrations/004_sync_state.sql`:
-```sql
-CREATE TABLE sync_state (
-    id INTEGER PRIMARY KEY,
-    last_sync INTEGER NOT NULL,
-    node_id TEXT NOT NULL
-);
+#### 5.3 - Create HistoricalRate Model
+Create `src/models/historical.rs`:
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct HistoricalRate {
+    pub date: String,
+    pub base: String,
+    pub rates: HashMap<String, f64>,
+}
 ```
 
-#### 4.6 - Implement Storage Module
-Create `src/storage/mod.rs` with repository traits.
+#### 5.4 - Create CurrencyMetadata Model
+Create `src/models/metadata.rs`:
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CurrencyMetadata {
+    pub code: String,
+    pub name: String,
+    pub symbol: Option<String>,
+    pub decimal_places: u8,
+    pub country: Option<String>,
+}
+```
 
-#### 4.7 - Implement SQLite Connection Pool
-Create `src/storage/sqlite.rs`:
-- Connection pool management
-- Migration runner
+#### 5.5 - Create API Response Types
+Create `src/models/api/response.rs`:
+- `CurrenciesResponse` - List of supported currencies
+- `LatestRatesResponse` - Latest exchange rates
+- `HistoricalRatesResponse` - Historical rates
+- `ConvertResponse` - Currency conversion result
+- `ErrorResponse` - API error response
 
-#### 4.8 - Create Rates Repository
-Create `src/storage/repositories/rates.rs`:
-- CRUD operations for rates
+#### 5.6 - Create Error Types with API Mapping
+Update `src/models/error.rs`:
+- Map domain errors to HTTP status codes
+- Add API error response generation
+- Add validation errors
 
-#### 4.9 - Create Historical Repository
-Create `src/storage/repositories/historical.rs`:
-- CRUD operations for historical rates
+#### 5.7 - Add Validation Logic
+Create `src/models/validation.rs`:
+- Currency code validation (ISO 4217)
+- Date format validation
+- Rate value validation
+- Request parameter validation
 
-#### 4.10 - Add Database Health Check
-Update health check to verify database connectivity.
+#### 5.8 - Add OpenAPI Schemas
+Add `ToSchema` derive to all models and `utoipa::path` to response types.
 
-#### 4.11 - Test Storage Operations
-Create integration tests for storage layer.
+#### 5.9 - Test Model Serialization
+Create `tests/models.rs`:
+- Test JSON serialization/deserialization
+- Test validation logic
+- Test edge cases
 
 ### Deliverables
 
-- SQLite database with migrations
-- Repository traits and implementations
-- Database health check integration
+- All domain models with validation
+- API request/response types
+- OpenAPI schema annotations
+- Comprehensive test coverage
 
 ### Acceptance Criteria
 
-- [ ] Migrations run successfully
-- [ ] Repository operations work
-- [ ] Health check includes database
+- [ ] All models have ToSchema derive
+- [ ] Models validate input correctly
+- [ ] Error types map to HTTP status codes
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -111,17 +122,18 @@ cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
+# Check OpenAPI schema
 cargo run &
-curl http://localhost:8080/health | jq .checks.database
+curl http://localhost:8080/api-docs/openapi.json | jq '.components.schemas'
 ```
 
 ### After Completion
 
-1. Update PLAN.md - Mark Phase 4 complete
-2. Update STATUS.md - Move to Phase 5
-3. Update WHAT_WE_DID.md - Document Phase 4
-4. Update DO_NEXT.md - Set up Phase 5 tasks
-5. Move `tasks/phase4/*.md` to `tasks/done/phase4/`
-6. Create feature branch for Phase 5
+1. Update PLAN.md - Mark Phase 5 complete
+2. Update STATUS.md - Move to Phase 6
+3. Update WHAT_WE_DID.md - Document Phase 5
+4. Update DO_NEXT.md - Set up Phase 6 tasks
+5. Move `tasks/phase5/*.md` to `tasks/done/phase5/`
+6. Create feature branch for Phase 6
 7. Create PR
 8. Ensure CI passes

@@ -1,5 +1,47 @@
 # What We Did
 
+## 2026-03-02: Phase 4 Complete - SQLite Storage Layer ✅
+
+### PR #7: SQLite Storage Layer
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/7
+
+#### Completed Tasks
+
+1. **sqlx Dependencies**
+   - Added `sqlx` 0.8 with sqlite feature
+   - Added `async-trait` 0.1
+   - Added `chrono` 0.4
+   - Disabled default features to avoid unused MySQL/Postgres deps
+
+2. **Migrations**
+   - Created `migrations/20240302000000_initial.sql` - Schema migrations table
+   - Created `migrations/20240302000001_rates.sql` - Exchange rates table
+   - Created `migrations/20240302000002_historical.sql` - Historical rates table
+   - Created `migrations/20240302000003_sync_state.sql` - CRDT sync state table
+
+3. **Storage Module**
+   - Created `src/storage/mod.rs` with Repository trait
+   - Created `src/storage/sqlite.rs` with connection pool management
+   - Auto-migration on startup
+
+4. **Repositories**
+   - Created `src/storage/repositories/rates.rs` - Rates CRUD operations
+   - Created `src/storage/repositories/historical.rs` - Historical rates CRUD
+   - Implemented Repository trait with generic CRUD interface
+
+5. **Database Integration**
+   - Updated `Settings` with `DatabaseConfig`
+   - Updated `AppState` with database pool
+   - Updated health check to verify database connectivity
+   - Main initializes database pool with auto-migration
+
+6. **Security Fixes**
+   - Ignored RUSTSEC-2023-0071 (rsa vulnerability in unused sqlx-mysql)
+   - Created `.cargo/audit.toml` for audit configuration
+
+---
+
 ## 2026-03-02: Phase 3 Complete - Prometheus Metrics ✅
 
 ### PR #6: Prometheus Metrics
@@ -170,6 +212,6 @@ Created comprehensive specifications in `specs/`:
 
 ---
 
-## Next: Phase 4 - SQLite Storage Layer
+## Next: Phase 5 - Data Models
 
-Implementing SQLite database with migrations and repository pattern.
+Implementing domain models with validation and OpenAPI schemas.

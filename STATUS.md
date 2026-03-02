@@ -2,36 +2,38 @@
 
 ## Current State
 
-**Phase:** 4 (SQLite Storage Layer) - Starting
+**Phase:** 5 (Data Models) - Starting
 **Branch:** main (will create feature branch)
 **Last Updated:** 2026-03-02
 
-## Phase 3 Completed ✅
+## Phase 4 Completed ✅
 
-- [x] 3.1 - Add prometheus and axum-prometheus dependencies
-- [x] 3.2 - Create metrics module
-- [x] 3.3 - Define custom metrics
-- [x] 3.4 - Add Prometheus middleware layer
-- [x] 3.5 - Implement /metrics endpoint
-- [x] 3.6 - Add HTTP request metrics
-- [x] 3.7 - Test metrics output
+- [x] 4.1 - Add sqlx and dependencies
+- [x] 4.2 - Create migrations directory
+- [x] 4.3 - Create rates table migration
+- [x] 4.4 - Create historical rates migration
+- [x] 4.5 - Create sync state migration
+- [x] 4.6 - Implement storage module
+- [x] 4.7 - Implement SQLite connection pool
+- [x] 4.8 - Create rates repository
+- [x] 4.9 - Create historical repository
+- [x] 4.10 - Add database health check
+- [x] 4.11 - Test storage operations
 
-**PR #6 Merged:** https://github.com/e6qu/slowpokeapi/pull/6
+**PR #7 Merged:** https://github.com/e6qu/slowpokeapi/pull/7
 
-## Phase 4 Progress
+## Phase 5 Progress
 
 ### Tasks
-- [ ] 4.1 - Add sqlx and dependencies
-- [ ] 4.2 - Create migrations directory
-- [ ] 4.3 - Create rates table migration
-- [ ] 4.4 - Create historical rates migration
-- [ ] 4.5 - Create sync state migration
-- [ ] 4.6 - Implement storage module
-- [ ] 4.7 - Implement SQLite connection pool
-- [ ] 4.8 - Create rates repository
-- [ ] 4.9 - Create historical repository
-- [ ] 4.10 - Add database health check
-- [ ] 4.11 - Test storage operations
+- [ ] 5.1 - Create Currency model
+- [ ] 5.2 - Create ExchangeRate model
+- [ ] 5.3 - Create HistoricalRate model
+- [ ] 5.4 - Create CurrencyMetadata model
+- [ ] 5.5 - Create API response types
+- [ ] 5.6 - Create error types with API mapping
+- [ ] 5.7 - Add validation logic
+- [ ] 5.8 - Add OpenAPI schemas to all models
+- [ ] 5.9 - Test model serialization
 
 ## Blocked
 
