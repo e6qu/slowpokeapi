@@ -1,0 +1,28 @@
+# Clippy configuration
+# https://rust-lang.github.io/rust-clippy/master/index.html
+
+# Allow these lints
+avoid-breaking-exported-api = false
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 25
+
+# Documentation requirements
+missing-docs-in-crate-items = false
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Blacklist of disallowed types
+disallowed-types = [
+    # Use tokio::sync types instead
+    "std::sync::Mutex",
+    "std::sync::RwLock",
+]
+
+# Avoid certain methods
+disallowed-methods = [
+    # Use expect or context instead
+    { path = "std::option::Option::unwrap", reason = "use expect() with context" },
+    { path = "std::result::Result::unwrap", reason = "use expect() with context" },
+]
