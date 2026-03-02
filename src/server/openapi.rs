@@ -25,7 +25,8 @@ use crate::handlers::health::{HealthCheck, HealthResponse};
         crate::handlers::health::healthz,
         crate::handlers::health::readyz,
         crate::handlers::health::livez,
-        crate::handlers::health::health
+        crate::handlers::health::health,
+        crate::handlers::metrics::metrics
     ),
     components(
         schemas(HealthResponse, HealthCheck)

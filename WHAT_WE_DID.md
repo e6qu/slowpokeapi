@@ -1,5 +1,37 @@
 # What We Did
 
+## 2026-03-02: Phase 2 Complete - OpenAPI & Swagger UI ✅
+
+### PR #5: OpenAPI & Swagger UI
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/5
+
+#### Completed Tasks
+
+1. **utoipa Dependencies**
+   - Added `utoipa` with `axum_extras` feature
+   - Added `utoipa-swagger-ui` with `axum` feature
+
+2. **OpenAPI Schema Generation**
+   - Created `src/server/openapi.rs` with OpenAPI spec builder
+   - Added `#[utoipa::path]` annotations to all health handlers
+   - Added `ToSchema` derives to response types
+
+3. **Swagger UI**
+   - Mounted at `/swagger-ui/`
+   - Serves interactive API documentation
+   - OpenAPI JSON at `/api-docs/openapi.json`
+
+4. **Integration Tests**
+   - Tests for Swagger UI endpoint
+   - Tests for OpenAPI JSON endpoint
+   - Tests for health endpoint documentation
+
+5. **Bug Fix**
+   - Fixed environment variable format: `SLOWPOKEAPI__SERVER__PORT`
+
+---
+
 ## 2026-03-02: Phase 1 Complete - Project Foundation ✅
 
 ### PR #4: Foundation Complete
@@ -15,7 +47,7 @@
    - `models/` - Domain models and error types
 
 2. **Configuration Loading**
-   - Environment variable support with `SLOWPOKEAPI_` prefix
+   - Environment variable support with `SLOWPOKEAPI__` prefix
    - Config file support (YAML, TOML, JSON)
    - Settings struct with defaults
 
@@ -98,6 +130,6 @@ Created comprehensive specifications in `specs/`:
 
 ---
 
-## Next: Phase 2 - OpenAPI & Swagger UI
+## Next: Phase 3 - Prometheus Metrics
 
-Adding OpenAPI schema generation and interactive documentation.
+Adding Prometheus metrics endpoint with HTTP request metrics.
