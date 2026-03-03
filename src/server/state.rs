@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use crate::cache::RateCache;
+use crate::ratelimit::RateLimiter;
 use crate::storage::{ApiKeyStore, SqlitePool};
 use crate::upstream::UpstreamManager;
 
@@ -13,6 +14,7 @@ pub struct AppState {
     pub rate_cache: Option<Arc<RateCache>>,
     pub upstream_manager: Option<Arc<UpstreamManager>>,
     pub api_key_store: Option<Arc<ApiKeyStore>>,
+    pub rate_limiter: Option<Arc<RateLimiter>>,
 }
 
 impl AppState {
@@ -24,6 +26,7 @@ impl AppState {
             rate_cache: None,
             upstream_manager: None,
             api_key_store: None,
+            rate_limiter: None,
         }
     }
 
@@ -31,7 +34,13 @@ impl AppState {
         self.db_pool = Some(pool.clone());
         let cache = crate::cache::create_rate_cache(&self.config.cache, pool.clone());
         self.rate_cache = Some(Arc::new(cache));
-        self.api_key_store = Some(Arc::new(ApiKeyStore::new(pool)));
+        let api_key_store = Arc::new(ApiKeyStore::new(pool));
+        let rate_limiter = Arc::new(RateLimiter::new(
+            self.config.rate_limit.clone(),
+            api_key_store.clone(),
+        ));
+        self.rate_limiter = Some(rate_limiter);
+        self.api_key_store = Some(api_key_store);
         self
     }
 

@@ -37,14 +37,14 @@ pub async fn get_quota(
 
     match api_key {
         Some(key) => {
-            if let Some(api_key_store) = &state.api_key_store {
-                match api_key_store.get(&key).await {
-                    Some(api_key_info) => {
+            if let Some(rate_limiter) = &state.rate_limiter {
+                match rate_limiter.get_quota_info(&key).await {
+                    Some(info) => {
                         let response = QuotaResponse {
-                            api_key: api_key_info.key.clone(),
-                            limit: api_key_info.rate_limit.burst_capacity,
-                            remaining: api_key_info.rate_limit.burst_capacity,
-                            reset_seconds: 0,
+                            api_key: key,
+                            limit: info.limit,
+                            remaining: info.remaining,
+                            reset_seconds: info.reset_after.as_secs(),
                         };
                         (StatusCode::OK, Json(response))
                     }

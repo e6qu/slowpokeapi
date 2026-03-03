@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::ratelimit::{ApiKey, RateLimitConfig};
+use crate::ratelimit::ApiKey;
 use crate::Error;
 
 pub struct ApiKeyStore {
@@ -25,8 +25,6 @@ impl ApiKeyStore {
             CREATE TABLE IF NOT EXISTS api_keys (
                 key TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                requests_per_second INTEGER NOT NULL,
-                burst_capacity INTEGER NOT NULL,
                 is_active INTEGER NOT NULL DEFAULT 1
             )
             "#,
@@ -40,23 +38,18 @@ impl ApiKeyStore {
     }
 
     async fn load_cache(&self) -> Result<(), Error> {
-        let rows: Vec<(String, String, i64, i64, i64)> = sqlx::query_as(
-            "SELECT key, name, requests_per_second, burst_capacity, is_active FROM api_keys WHERE is_active = 1",
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let rows: Vec<(String, String, i64)> =
+            sqlx::query_as("SELECT key, name, is_active FROM api_keys WHERE is_active = 1")
+                .fetch_all(&self.pool)
+                .await?;
 
         let mut cache = self.cache.write().await;
         cache.clear();
 
-        for (key, name, rps, capacity, is_active) in rows {
+        for (key, name, is_active) in rows {
             let api_key = ApiKey {
                 key: key.clone(),
                 name,
-                rate_limit: RateLimitConfig {
-                    requests_per_second: rps as u64,
-                    burst_capacity: capacity as u64,
-                },
                 is_active: is_active != 0,
             };
             cache.insert(key, api_key);
@@ -73,14 +66,12 @@ impl ApiKeyStore {
     pub async fn create(&self, api_key: ApiKey) -> Result<(), Error> {
         sqlx::query(
             r#"
-            INSERT INTO api_keys (key, name, requests_per_second, burst_capacity, is_active)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO api_keys (key, name, is_active)
+            VALUES (?, ?, ?)
             "#,
         )
         .bind(&api_key.key)
         .bind(&api_key.name)
-        .bind(api_key.rate_limit.requests_per_second as i64)
-        .bind(api_key.rate_limit.burst_capacity as i64)
         .bind(api_key.is_active as i64)
         .execute(&self.pool)
         .await?;
