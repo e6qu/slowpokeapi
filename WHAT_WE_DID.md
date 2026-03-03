@@ -1,5 +1,52 @@
 # What We Did
 
+## 2026-03-03: Phase 13 Complete - Cryptocurrency Support ✅
+
+### PR #20: Cryptocurrency Support
+
+**Merged:** TBD
+
+#### Completed Tasks
+
+1. **CoinGecko Client**
+   - Created `src/upstream/coingecko.rs` with `CoinGeckoClient` struct
+   - `get_latest_rates()` - fetches prices in multiple fiat currencies
+   - `get_historical_rates()` - fetches historical prices by date
+   - Currency ID mapping for BTC, ETH, and 13 other cryptocurrencies
+   - Circuit breaker integration and metrics
+
+2. **CoinCap Client**
+   - Created `src/upstream/coincap.rs` with `CoinCapClient` struct
+   - `get_latest_rates()` - fetches USD-denominated prices
+   - `get_historical_rates()` - fetches historical prices by date
+   - Currency ID mapping for 15 cryptocurrencies
+   - Circuit breaker integration and metrics
+
+3. **Crypto/Metal Currency Definitions**
+   - Added `CRYPTO_CURRENCIES` constant with 15 crypto codes
+   - Added `METAL_CURRENCIES` constant with XAU, XAG, XPT, XPD
+   - Helper functions: `is_crypto_code()`, `is_metal_code()`
+   - `get_crypto_currency()` and `get_metal_currency()` helpers
+
+4. **Upstream Manager Updates**
+   - Separate client lists for fiat and crypto upstreams
+   - Automatic routing based on currency code
+   - `is_crypto_currency()` check routes to crypto clients
+
+5. **Latest Endpoint Updates**
+   - Updated validation to accept crypto codes (BTC, ETH, etc.)
+   - Updated validation to accept metal codes (XAU, XAG, etc.)
+   - Updated OpenAPI documentation
+
+6. **Comprehensive Tests**
+   - Created 14 tests in `tests/crypto.rs`
+   - Tests for ID mapping functions
+   - Tests for crypto code validation
+   - Tests for client instantiation and basic operations
+   - Tests for upstream manager crypto support
+
+---
+
 ## 2026-03-03: Phase 15 Complete - Sync Integration ✅
 
 ### PR #15: Sync Integration

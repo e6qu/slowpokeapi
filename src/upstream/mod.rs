@@ -1,5 +1,7 @@
 pub mod circuit_breaker;
 pub mod client;
+pub mod coincap;
+pub mod coingecko;
 pub mod fawaz;
 pub mod frankfurter;
 pub mod manager;
@@ -20,6 +22,12 @@ pub trait Upstream: Send + Sync {
 }
 
 pub use client::HttpClient;
+pub use coincap::CoinCapClient;
+pub use coingecko::CoinGeckoClient;
 pub use fawaz::FawazClient;
 pub use frankfurter::FrankfurterClient;
 pub use manager::UpstreamManager;
+
+pub fn is_crypto_currency(code: &str) -> bool {
+    coingecko::is_crypto_currency(code)
+}
