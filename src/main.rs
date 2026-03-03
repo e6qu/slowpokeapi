@@ -4,9 +4,11 @@ use slowpokeapi::{
     config::Settings,
     server::{create_router, AppState},
     storage::sqlite::create_pool,
+    upstream::UpstreamManager,
 };
 use std::net::SocketAddr;
 use std::path::Path;
+use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -36,7 +38,12 @@ async fn main() {
             .expect("Failed to create database pool")
     };
 
-    let state = AppState::new(settings.clone()).with_db(db_pool);
+    let http_client = Arc::new(slowpokeapi::upstream::HttpClient::new(10));
+    let upstream_manager = UpstreamManager::new(http_client);
+
+    let state = AppState::new(settings.clone())
+        .with_db(db_pool)
+        .with_upstream(upstream_manager);
     let app = create_router(state);
 
     let addr = SocketAddr::new(
