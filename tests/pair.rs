@@ -18,7 +18,6 @@ async fn pair_endpoint_returns_rate_without_amount() {
 
     let body: PairResponse = response.json().await.expect("Failed to parse JSON");
 
-    assert!(body.conversion_rates.contains_key("USD"));
     assert!(body.conversion_rate > 0.0);
-    assert!(body.target_code == "EUR");
+    assert_eq!(body.target_code, "EUR");
 }

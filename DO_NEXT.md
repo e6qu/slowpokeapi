@@ -1,86 +1,79 @@
 # Do Next
-## Phase 9: Latest Rates Endpoint
+## Phase 11: Historical Rates Endpoint
 ### Goal
 
-Implement `/v1/latest` endpoint to fetch current exchange rates.
+Implement `/v1/history/{base}/{year}/{month}/{day}` endpoint.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 9.1 | Create latest handler | `src/handlers/latest.rs` | Pending |
-| 9.2 | Implement rate fetching logic | `src/services/rates.rs` | Pending |
-| 9.3 | Add cache integration | `src/services/rates.rs` | Pending |
-| 9.4 | Add upstream fallback | `src/services/rates.rs` | Pending |
-| 9.5 | Implement response formatting | `src/handlers/latest.rs` | Pending |
-| 9.6 | Add input validation | `src/handlers/latest.rs` | Pending |
-| 9.7 | Add openapi annotations | `src/handlers/latest.rs` | Pending |
-| 9.8 | Add route to router | `src/server/router.rs` | Pending |
-| 9.9 | Test endpoint | `tests/latest.rs` | Pending |
+| 11.1 | Create history handler | `src/handlers/history.rs` | Pending |
+| 11.2 | Implement historical fetch from upstream | `src/upstream/*.rs` | Pending |
+| 11.3 | Add SQLite caching for historical data | `src/cache/sqlite.rs` | Pending |
+| 11.4 | Implement response formatting | `src/handlers/history.rs` | Pending |
+| 11.5 | Add date validation | `src/handlers/history.rs` | Pending |
+| 11.6 | Add OpenAPI annotations | `src/handlers/history.rs` | Pending |
+| 11.7 | Add route to router | `src/server/router.rs` | Pending |
+| 11.8 | Test endpoint | `tests/history.rs` | Pending |
 
 ### Task Details
 
-#### 9.1 - Create latest handler
-Create `src/handlers/latest.rs`:
-- Handler for latest rates endpoint
-- Use upstream manager to fetch rates
-- Return `LatestRatesResponse`
+#### 11.1 - Create history handler
+Create `src/handlers/history.rs`:
+- Handler for historical rates endpoint
+- Path parameters: base, year, month, day
+- Return `HistoricalResponse`
 
-#### 9.2 - implement rate fetching logic
-Create `src/services/rates.rs`:
-- Service to fetch latest rates
+#### 11.2 - Implement historical fetch
+- Use upstream manager's `get_historical_rates` method
 - Check cache first
-- Try upstream APIs on miss
-- Update cache on success
+- Fallback chain on miss
 
-#### 9.3 - add cache integration
-- Inject cache into rates service
-- Use TieredCache for storage
+#### 11.3 - Add caching
+- Cache key: `history:{base}:{year}:{month}:{day}`
+- Longer TTL for historical data (doesn't change)
 
-#### 9.4 - add upstream fallback
-- Use upstream manager to try primary then fallback
-- Return error if all fail
+#### 11.4 - Response formatting
+- Format as `HistoricalResponse`
+- Include base_code, year, month, day
+- Include conversion_rates
 
-#### 9.5 - implement response formatting
-- Format as `LatestRatesResponse`
-- Include base currency, date, rates
-- Include source information
+#### 11.5 - Date validation
+- Validate year (reasonable range, e.g., 1999+)
+- Validate month (1-12)
+- Validate day (1-31, consider month)
+- Return 400 for invalid dates
 
-#### 9.6 - add input validation
-- Validate base currency (3-letter ISO code)
-- Validate target currencies (comma-separated or list)
-- Return 400 for invalid currencies
-
-#### 9.7 - add openapi annotations
+#### 11.6 - Add OpenAPI annotations
 - Add `#[utoipa::path]` annotations
 - Document response schemas
 - Add tags for grouping
 
-#### 9.8 - add route to router
+#### 11.7 - Add route to router
 Update `src/server/router.rs`:
-- Mount `GET /v1/latest`
+- Mount `GET /v1/history/:base_code/:year/:month/:day`
 
-#### 9.9 - test endpoint
-Create `tests/latest.rs`:
-- Test latest rates endpoint
-- Test response format
-- Test caching behavior
-- Test upstream fallback
+#### 11.8 - Test endpoint
+Create `tests/history.rs`:
+- Test valid historical date
+- Test invalid date formats
+- Test future date rejection
 
 ### Deliverables
 
-- `GET /v1/latest` - Current exchange rates
+- `GET /v1/history/{base}/{year}/{month}/{day}` - Historical rates
 - Response formatted as RapidAPI-compatible JSON
+- Caching of historical data
 
 ### Acceptance Criteria
-- [ ] Latest handler created
-- [ ] Rate fetching logic implemented
-- [ ] Cache integration working
-- [ ] Upstream fallback working
+- [ ] History handler created
+- [ ] Historical fetch working
+- [ ] Caching working
 - [ ] Response formatting correct
-- [ ] Input validation working
+- [ ] Date validation working
 - [ ] OpenAPI annotations added
-- [ ] Routes mounted
+- [ ] Route mounted
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -94,14 +87,14 @@ cargo fmt --check
 
 # Run and test endpoint
 cargo run &
-curl http://localhost:8080/v1/latest?base=USD
+curl http://localhost:8080/v1/history/USD/2024/01/15
 ```
 
-### after completion
-1. Update PLAN.md - Mark Phase 9 complete
-2. Update STATUS.md - Move to Phase 10
-3. Update what_we_did.md - document Phase 9
-4. Update do_next.md - set up Phase 10 tasks
-5. Create feature branch for Phase 10
+### After completion
+1. Update PLAN.md - Mark Phase 11 complete
+2. Update STATUS.md - Move to Phase 12
+3. Update WHAT_WE_DID.md - document Phase 11
+4. Update DO_NEXT.md - set up Phase 12 tasks
+5. Create feature branch for Phase 12
 6. Create PR
-7. ensure ci passes
+7. Ensure CI passes

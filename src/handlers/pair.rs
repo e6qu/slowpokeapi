@@ -39,11 +39,16 @@ pub async fn get_pair(
     if base.len() != 3 || !base.chars().all(|c| c.is_ascii_uppercase()) {
         return Err((
             StatusCode::BAD_REQUEST,
-            format!("Invalid base currency code: {}", base),
+            format!("Invalid base currency code: {base}"),
         ));
     }
 
- return Ok(Json(build_response(&rates, &target, amount))
+    if target.len() != 3 || !target.chars().all(|c| c.is_ascii_uppercase()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("Invalid target currency code: {target}"),
+        ));
+    }
 
     if let Some(amount) = amount {
         if amount <= 0.0 {
