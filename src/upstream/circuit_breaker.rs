@@ -85,20 +85,3 @@ impl Default for CircuitBreaker {
         Self::new(5, Duration::from_secs(60))
     }
 }
-
-#[allow(clippy::disallowed_types)]
-impl Clone for CircuitBreaker {
-    fn clone(&self) -> Self {
-        Self {
-            failure_threshold: self.failure_threshold,
-            reset_timeout: self.reset_timeout,
-            failure_count: AtomicU64::new(self.failure_count.load(Ordering::SeqCst)),
-            last_failure_time: std::sync::Mutex::new(*self.last_failure_time.lock().unwrap()),
-            state: Mutex::new(
-                tokio::runtime::Handle::try_current()
-                    .map(|h| h.block_on(async { *self.state.lock().await }))
-                    .unwrap_or(CircuitState::Closed),
-            ),
-        }
-    }
-}

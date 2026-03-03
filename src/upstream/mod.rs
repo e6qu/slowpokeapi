@@ -31,3 +31,7 @@ pub use manager::UpstreamManager;
 pub fn is_crypto_currency(code: &str) -> bool {
     coingecko::is_crypto_currency(code)
 }
+
+pub fn is_metal_currency(code: &str) -> bool {
+    matches!(code.to_uppercase().as_str(), "XAU" | "XAG" | "XPT" | "XPD")
+}

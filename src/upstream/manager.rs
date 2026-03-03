@@ -3,6 +3,7 @@ use std::sync::Arc;
 use super::circuit_breaker::CircuitBreaker;
 use super::{CoinCapClient, CoinGeckoClient, FawazClient, FrankfurterClient, HttpClient, Upstream};
 use crate::models::{HistoricalRate, RateCollection};
+use crate::upstream::{is_crypto_currency, is_metal_currency};
 use crate::{Error, Result};
 
 pub struct UpstreamManager {
@@ -10,6 +11,8 @@ pub struct UpstreamManager {
     fiat_circuit_breakers: Vec<Arc<CircuitBreaker>>,
     crypto_clients: Vec<Arc<dyn Upstream>>,
     crypto_circuit_breakers: Vec<Arc<CircuitBreaker>>,
+    metal_clients: Vec<Arc<dyn Upstream>>,
+    metal_circuit_breakers: Vec<Arc<CircuitBreaker>>,
 }
 
 impl UpstreamManager {
@@ -24,7 +27,7 @@ impl UpstreamManager {
             .collect();
 
         let coingecko = Arc::new(CoinGeckoClient::new(http.clone()));
-        let coincap = Arc::new(CoinCapClient::new(http));
+        let coincap = Arc::new(CoinCapClient::new(http.clone()));
 
         let crypto_clients: Vec<Arc<dyn Upstream>> = vec![coingecko, coincap];
         let crypto_circuit_breakers = crypto_clients
@@ -32,16 +35,25 @@ impl UpstreamManager {
             .map(|_| Arc::new(CircuitBreaker::default()))
             .collect();
 
+        let metal_clients: Vec<Arc<dyn Upstream>> = vec![];
+        let metal_circuit_breakers: Vec<Arc<CircuitBreaker>> = vec![];
+
         Self {
             fiat_clients,
             fiat_circuit_breakers,
             crypto_clients,
             crypto_circuit_breakers,
+            metal_clients,
+            metal_circuit_breakers,
         }
     }
 
     fn is_crypto_currency(code: &str) -> bool {
-        crate::upstream::is_crypto_currency(code)
+        is_crypto_currency(code)
+    }
+
+    fn is_metal_currency(code: &str) -> bool {
+        is_metal_currency(code)
     }
 
     async fn get_latest_from_clients(
@@ -111,6 +123,14 @@ impl UpstreamManager {
         if Self::is_crypto_currency(base) {
             Self::get_latest_from_clients(&self.crypto_clients, &self.crypto_circuit_breakers, base)
                 .await
+        } else if Self::is_metal_currency(base) {
+            if self.metal_clients.is_empty() {
+                return Err(Error::Internal(
+                    "Metal currency rates are not supported yet".to_string(),
+                ));
+            }
+            Self::get_latest_from_clients(&self.metal_clients, &self.metal_circuit_breakers, base)
+                .await
         } else {
             Self::get_latest_from_clients(&self.fiat_clients, &self.fiat_circuit_breakers, base)
                 .await
@@ -126,6 +146,19 @@ impl UpstreamManager {
             Self::get_historical_from_clients(
                 &self.crypto_clients,
                 &self.crypto_circuit_breakers,
+                base,
+                date,
+            )
+            .await
+        } else if Self::is_metal_currency(base) {
+            if self.metal_clients.is_empty() {
+                return Err(Error::Internal(
+                    "Metal currency historical rates are not supported yet".to_string(),
+                ));
+            }
+            Self::get_historical_from_clients(
+                &self.metal_clients,
+                &self.metal_circuit_breakers,
                 base,
                 date,
             )
@@ -148,9 +181,10 @@ impl UpstreamManager {
                 .iter()
                 .filter(|c| c.is_healthy())
                 .count()
+            + self.metal_clients.iter().filter(|c| c.is_healthy()).count()
     }
 
     pub fn total_count(&self) -> usize {
-        self.fiat_clients.len() + self.crypto_clients.len()
+        self.fiat_clients.len() + self.crypto_clients.len() + self.metal_clients.len()
     }
 }

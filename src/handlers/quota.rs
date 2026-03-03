@@ -40,8 +40,13 @@ pub async fn get_quota(
             if let Some(rate_limiter) = &state.rate_limiter {
                 match rate_limiter.get_quota_info(&key).await {
                     Some(info) => {
+                        let masked_key = if key.len() > 8 {
+                            format!("***...{}", &key[key.len() - 4..])
+                        } else {
+                            "***".to_string()
+                        };
                         let response = QuotaResponse {
-                            api_key: key,
+                            api_key: masked_key,
                             limit: info.limit,
                             remaining: info.remaining,
                             reset_seconds: info.reset_after.as_secs(),

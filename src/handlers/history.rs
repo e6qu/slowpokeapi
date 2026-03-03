@@ -6,6 +6,7 @@ use crate::models::{HistoricalRate, HistoricalResponse, ResponseResult};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
+const MIN_HISTORICAL_DATE: &str = "1999-01-04";
 
 #[utoipa::path(
     get,
@@ -49,7 +50,8 @@ pub async fn get_history(
         ));
     }
 
-    let min_date = chrono::NaiveDate::from_ymd_opt(1999, 1, 4).unwrap();
+    let min_date = chrono::NaiveDate::parse_from_str(MIN_HISTORICAL_DATE, "%Y-%m-%d")
+        .expect("MIN_HISTORICAL_DATE constant is valid");
     if date < min_date {
         return Err((
             StatusCode::BAD_REQUEST,

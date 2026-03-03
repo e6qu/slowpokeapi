@@ -1,5 +1,58 @@
 # What We Did
 
+## 2026-03-04: Phase 22 Part 3 - Fourth Bug Review & Fixes ✅
+
+### PR #: Fourth Bug Review Round
+
+**Status:** Complete
+
+#### Fixed Bugs (7 total)
+
+1. **API Key Exposure (Bug #50)** - Security Fix
+   - Masked API key in quota response
+   - Shows only last 4 characters with prefix `***...`
+   - File: `src/handlers/quota.rs`
+
+2. **Metal Currency Routing (Bug #53)**
+   - Added `is_metal_currency()` function to upstream module
+   - Updated UpstreamManager to route metal currencies
+   - Returns clear error message when metals not supported
+   - Files: `src/upstream/mod.rs`, `src/upstream/manager.rs`
+
+3. **Amount NaN/Infinity Validation (Bug #60)**
+   - Added `is_finite()` check to amount validation
+   - Prevents NaN and Infinity values
+   - File: `src/handlers/pair.rs`
+
+4. **Circuit Breaker Clone Panic (Bug #64)** - High Priority
+   - Removed Clone implementation entirely
+   - Circuit breakers already wrapped in Arc
+   - Prevents panic from block_on in async context
+   - File: `src/upstream/circuit_breaker.rs`
+
+5. **Date Construction Unwrap (Bug #65)**
+   - Changed unwrap to expect with clear message
+   - Used constant for minimum date string
+   - File: `src/handlers/history.rs`
+
+6. **Silent Date Fallback (Bug #67)**
+   - Added warning logging when date parsing fails
+   - Added logging when date field is missing
+   - File: `src/upstream/frankfurter.rs`
+
+7. **Cache Key Collision (Bug #68)**
+   - Changed enriched endpoint cache prefix to `enriched:`
+   - Prevents confusion with pair endpoint cache
+   - File: `src/handlers/enriched.rs`
+
+#### Fourth Bug Review Findings
+- **New bugs discovered:** 9 (1 high, 4 medium, 4 low)
+- **Total bugs in tracker:** 72
+- **Fixed in this PR:** 7
+- **Focus:** Security, routing, validation, error handling
+
+---
+
 ## 2026-03-04: Phase 22 Part 2 - Third Bug Review & Metrics Fixes ✅
 
 ### PR #: Third Bug Review Round
