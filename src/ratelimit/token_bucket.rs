@@ -79,7 +79,7 @@ mod tests {
         std::thread::sleep(Duration::from_millis(250));
         let tokens = bucket.available_tokens();
         assert!(
-            tokens >= 20 && tokens <= 35,
+            (20..=35).contains(&tokens),
             "Expected 20-35 tokens after 250ms at 100/s refill rate, got {tokens}"
         );
     }
