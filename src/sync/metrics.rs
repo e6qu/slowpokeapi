@@ -1,5 +1,5 @@
 use once_cell::sync::Lazy;
-use prometheus::{Counter, Gauge, Registry};
+use prometheus::{Counter, Gauge};
 
 pub static SYNC_METRICS: Lazy<SyncMetrics> = Lazy::new(SyncMetrics::new);
 
@@ -12,8 +12,6 @@ pub struct SyncMetrics {
 
 impl SyncMetrics {
     fn new() -> Self {
-        let registry = Registry::new();
-
         let sync_operations_total = Counter::new(
             "slowpokeapi_sync_operations_total",
             "Total number of sync operations",
@@ -38,6 +36,7 @@ impl SyncMetrics {
         )
         .unwrap();
 
+        let registry = prometheus::default_registry();
         registry
             .register(Box::new(sync_operations_total.clone()))
             .unwrap();

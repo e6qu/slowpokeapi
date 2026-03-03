@@ -3,6 +3,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use moka::sync::Cache as MokaCache;
 
+use super::metrics::CACHE_METRICS;
 use super::Cache;
 use crate::Error;
 
@@ -35,21 +36,39 @@ where
     V: Clone + Send + Sync + 'static,
 {
     async fn get(&self, key: &K) -> Result<Option<V>, Error> {
-        Ok(self.inner.get(key))
+        let start = std::time::Instant::now();
+        let result = self.inner.get(key);
+
+        if result.is_some() {
+            CACHE_METRICS.record_hit();
+        } else {
+            CACHE_METRICS.record_miss();
+        }
+
+        CACHE_METRICS.observe_latency("get", start.elapsed());
+        Ok(result)
     }
 
     async fn set(&self, key: K, value: V, _ttl: Option<Duration>) -> Result<(), Error> {
+        let start = std::time::Instant::now();
         self.inner.insert(key, value);
+        CACHE_METRICS.record_set();
+        CACHE_METRICS.observe_latency("set", start.elapsed());
         Ok(())
     }
 
     async fn delete(&self, key: &K) -> Result<(), Error> {
+        let start = std::time::Instant::now();
         self.inner.invalidate(key);
+        CACHE_METRICS.record_delete();
+        CACHE_METRICS.observe_latency("delete", start.elapsed());
         Ok(())
     }
 
     async fn clear(&self) -> Result<(), Error> {
+        let start = std::time::Instant::now();
         self.inner.invalidate_all();
+        CACHE_METRICS.observe_latency("clear", start.elapsed());
         Ok(())
     }
 }
