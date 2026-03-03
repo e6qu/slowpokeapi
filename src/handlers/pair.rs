@@ -36,6 +36,13 @@ pub async fn get_pair(
     let target = target_code.to_uppercase();
     let amount = params.amount;
 
+    if base == target {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Base and target currencies must be different".to_string(),
+        ));
+    }
+
     let is_crypto = is_crypto_code(&base) || is_crypto_code(&target);
     let is_metal = is_metal_code(&base) || is_metal_code(&target);
     let is_fiat = (base.len() == 3 && base.chars().all(|c| c.is_ascii_uppercase()))
@@ -61,7 +68,15 @@ pub async fn get_pair(
 
     if let Some(ref cache) = state.rate_cache {
         match cache.get(&cache_key).await {
-            Ok(Some(rates)) => return Ok(Json(build_response(&rates, &target, amount))),
+            Ok(Some(rates)) => {
+                let rate = rates.rates.get(&target).copied().ok_or((
+                    StatusCode::NOT_FOUND,
+                    format!("Currency not found: {target}"),
+                ))?;
+                return Ok(Json(build_response_with_rate(
+                    &rates, &target, rate, amount,
+                )));
+            }
             Ok(None) => {}
             Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
         }
@@ -79,22 +94,32 @@ pub async fn get_pair(
 
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
+            let rate = rates.rates.get(&target).copied().ok_or((
+                StatusCode::NOT_FOUND,
+                format!("Currency not found: {target}"),
+            ))?;
+
             if let Some(ref cache) = state.rate_cache {
                 if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
                     tracing::warn!("Cache set error: {}", e);
                 }
             }
-            Ok(Json(build_response(&rates, &target, amount)))
+            Ok(Json(build_response_with_rate(
+                &rates, &target, rate, amount,
+            )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_response(rates: &RateCollection, target: &str, amount: Option<f64>) -> PairResponse {
+fn build_response_with_rate(
+    rates: &RateCollection,
+    target: &str,
+    rate: f64,
+    amount: Option<f64>,
+) -> PairResponse {
     let now = chrono::Utc::now();
     let next_update = now + chrono::Duration::hours(24);
-
-    let rate = rates.rates.get(target).copied().unwrap_or(0.0);
 
     let conversion_result = amount.map(|a| a * rate);
 

@@ -1,16 +1,34 @@
 # SlowPokeAPI Bug Report
 
-Last Updated: 2026-03-03
+Last Updated: 2026-03-04
 
 ## Summary
 
+### Original Review (Phase 23)
 | Severity | Count | Status |
 |----------|-------|--------|
 | Critical | 4 | Fixed |
 | High | 10 | Fixed |
 | Medium | 8 | Fixed |
 | Low | 6 | Pending |
-| **Total** | **28** | **18 Fixed** |
+| **Total** | **28** | **22 Fixed** |
+
+### Second Review (Phase 22)
+| Severity | Count | Status |
+|----------|-------|--------|
+| High | 3 | 2 Fixed |
+| Medium | 9 | 2 Fixed |
+| Low | 10 | Pending |
+| **Total** | **22** | **4 Fixed** |
+
+### Overall
+| Severity | Count | Status |
+|----------|-------|--------|
+| Critical | 4 | Fixed |
+| High | 13 | 12 Fixed |
+| Medium | 17 | 10 Fixed |
+| Low | 16 | 6 Fixed |
+| **Total** | **50** | **28 Fixed** |
 
 ---
 
@@ -258,3 +276,175 @@ Last Updated: 2026-03-03
 - Fixed 8 medium priority logic and validation bugs
 - Fixed 4 low priority code quality issues
 - 6 low priority issues pending future work
+
+---
+
+## 11. HIGH: Silent 0.0 Rate Return (NEW) ✅ FIXED
+
+### Bug #29: Pair handler silently returns rate 0.0 for unknown target currency
+- **File:** `src/handlers/pair.rs:97`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** When the target currency is not in the rates map, the code returns `unwrap_or(0.0)` which silently returns a conversion rate of 0.0 without any error.
+- **Fix:** Return a 404 error when target currency is not found.
+
+### Bug #30: Enriched handler silently returns rate 0.0
+- **File:** `src/handlers/enriched.rs:151,176`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** Same issue as #29 - returns 0.0 instead of an error when target currency is not found.
+- **Fix:** Return proper 404 error.
+
+---
+
+## 12. MEDIUM: Integer Overflow & Precision Issues (NEW)
+
+### Bug #31: Integer overflow in exponential backoff
+- **File:** `src/ratelimit/mod.rs:191`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** Calculation with bit shifting could overflow on 32-bit systems.
+- **Fix:** Use `checked_mul` or `saturating_mul` consistently.
+
+### Bug #32: TTL truncation in SQLite cache
+- **File:** `src/cache/sqlite.rs:63`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** TTL loses millisecond precision (1500ms becomes 1 second).
+- **Fix:** Round up to nearest second or use milliseconds.
+
+---
+
+## 13. MEDIUM: Inconsistent Endpoint Support (NEW)
+
+### Bug #33: History endpoint only supports fiat
+- **File:** `src/handlers/history.rs:32-37`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** History validates only 3-letter fiat codes while latest/pair support crypto/metal.
+- **Fix:** Update validation or document limitation clearly.
+
+### Bug #34: Self-to-self rate query allowed
+- **File:** `src/handlers/pair.rs`, `src/handlers/enriched.rs`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** Pair endpoint allows base == target (e.g., `/v1/pair/USD/USD`).
+- **Fix:** Added early validation to reject base == target.
+
+---
+
+## 14. MEDIUM: Missing Data Validation (NEW)
+
+### Bug #35: No minimum date validation for historical rates
+- **File:** `src/handlers/history.rs:39-50`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** Very old dates (year 1, 1000) accepted but Frankfurter only has data from 1999.
+- **Fix:** Added minimum date check (1999-01-04).
+
+### Bug #36: CRDT apply_state accepts empty state
+- **File:** `src/sync/crdt.rs:46-55`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** Empty byte array from get_state failure causes deserialize error but leaves doc inconsistent.
+- **Fix:** Validate state is non-empty before applying.
+
+---
+
+## 15. MEDIUM: Metrics Not Being Recorded (NEW)
+
+### Bug #37: Cache metrics never updated
+- **File:** `src/cache/metrics.rs`, `src/cache/memory.rs`, `src/cache/sqlite.rs`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** CacheMetrics struct defined but never called in cache implementations.
+- **Fix:** Integrate cache metrics into get/set operations.
+
+### Bug #38: Sync metrics registry not used
+- **File:** `src/sync/metrics.rs:15,41-52`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Registry created but metrics not registered with default registry.
+- **Fix:** Register with `prometheus::default_registry()`.
+
+---
+
+## 16. LOW: API Documentation Issues (NEW)
+
+### Bug #39: OpenAPI spec incomplete
+- **File:** `src/server/openapi.rs:26-34`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Rate endpoints (`/v1/latest`, `/v1/pair`, etc.) missing from OpenAPI spec.
+- **Fix:** Add all endpoints to OpenApi derive macro's `paths()`.
+
+### Bug #40: Quota response model mismatch
+- **File:** `src/handlers/quota.rs:10-15` vs `src/models/api/response.rs:85-91`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Two different `QuotaResponse` structs with different fields.
+- **Fix:** Consolidate to single type or rename one.
+
+---
+
+## 17. LOW: Code Quality Issues (NEW)
+
+### Bug #41: Rate limit headers always present
+- **File:** `src/server/middleware/ratelimit.rs:113-136`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Headers added even when rate limiting disabled with 0 values.
+- **Fix:** Skip adding headers when disabled.
+
+### Bug #42: Missing input sanitization for cache keys
+- **File:** `src/handlers/latest.rs:43`, `src/handlers/pair.rs:60`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Cache keys from user input not sanitized (length limits, etc).
+- **Fix:** Add length limits for cache keys.
+
+### Bug #43: Duplicate API key extraction logic
+- **File:** `src/auth/api_key.rs:7-21` and `src/server/middleware/ratelimit.rs:97-111`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Similar API key extraction logic duplicated in two places.
+- **Fix:** Consolidate into single function.
+
+### Bug #44: Unused ValidationError enum
+- **File:** `src/models/validation.rs:4-19`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `ValidationError` enum defined but never used.
+- **Fix:** Either use it or remove it.
+
+### Bug #45: Test server process leaked
+- **File:** `tests/common/mod.rs:36`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `std::mem::forget(child)` leaks server process for test isolation.
+- **Fix:** Use proper test fixture with cleanup.
+
+### Bug #46: Upstream name parameter ignored in metrics
+- **File:** `src/upstream/metrics.rs:48,52`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `_upstream` parameter ignored, counters are global not per-upstream.
+- **Fix:** Either use the parameter or remove it.
+
+---
+
+## Priority Fix Order
+
+### Immediate (High Priority)
+1. Bug #29, #30: Return 404 for unknown currency instead of 0.0
+2. Bug #33: Document history endpoint limitation or update validation
+3. Bug #35: Add minimum date validation for historical rates
+
+### Near-term (Medium Priority)
+4. Bug #37: Integrate cache metrics
+5. Bug #34: Reject self-to-self rate queries
+6. Bug #31, #32: Fix overflow and precision issues
+
+### Future (Low Priority)
+7. Bug #39: Complete OpenAPI spec
+8. Bug #41-46: Code quality improvements

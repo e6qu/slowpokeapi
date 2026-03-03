@@ -1,5 +1,70 @@
 # What We Did
 
+## 2026-03-04: Phase 23 Continued - Additional Bug Fixes ✅
+
+### PR #: Additional Bug Fixes
+
+**Status:** Complete
+
+#### Fixed High Priority Issues
+
+1. **Pair/Enriched Return 404 for Unknown Currency**
+   - Previously returned 0.0 rate silently
+   - Now returns proper 404 NOT_FOUND error
+   - Files: `src/handlers/pair.rs`, `src/handlers/enriched.rs`
+
+2. **Self-to-Self Rate Queries Rejected**
+   - Added validation to reject base == target
+   - Returns 400 BAD_REQUEST with clear message
+   - Prevents wasteful API calls
+
+3. **Historical Rates Minimum Date**
+   - Added minimum date validation (1999-01-04)
+   - Frankfurter API only has data from this date
+   - Prevents unnecessary failed API calls
+
+#### Bug Tracking Update
+- Total bugs found: **50** (28 original + 22 new)
+- Total bugs fixed: **28** (56% completion)
+- Remaining: 22 (mostly low priority code quality issues)
+
+---
+
+## 2026-03-03: Phase 23 Complete - Bug Fixes & Code Quality ✅
+
+### PR #42: Bug Fixes & Code Quality Improvements
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/42
+
+#### Completed Tasks
+
+1. **Critical: Division by Zero**
+   - Added validation for `price > 0.0` in CoinGecko client (4 locations)
+   - Added validation for `price > 0.0` in CoinCap client (2 locations)
+
+2. **High: Panics Removed**
+   - Replaced `.unwrap()` with safe parsing in rate limit middleware
+   - Fixed panic in auth middleware header handling
+   - Made database path handling more robust in main.rs
+   - Improved error messages in HTTP client creation
+   - Fixed `and_hms_opt()` unwrap in crypto clients
+
+3. **High: Error Logging**
+   - Added error logging for cache get failures
+   - Added error logging for cache set failures
+   - Added CRDT serialization error logging
+
+4. **Medium: Validation Consistency**
+   - pair.rs now accepts crypto and metal codes
+   - Unified validation logic across handlers
+
+5. **Medium: Logic Fixes**
+   - Fixed incorrect base_code in enriched response
+   - FawazClient now has health tracking
+   - FawazClient historical rates returns proper error
+
+---
+
 ## 2026-03-03: Phase 21 Complete - CI/CD Pipeline ✅
 
 ### PR #: CI/CD Pipeline

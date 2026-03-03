@@ -49,6 +49,22 @@ pub async fn get_history(
         ));
     }
 
+    let min_date = chrono::NaiveDate::from_ymd_opt(1999, 1, 4).unwrap();
+    if date < min_date {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Historical data only available from 1999-01-04 onwards".to_string(),
+        ));
+    }
+
+    let min_date = chrono::NaiveDate::from_ymd_opt(1999, 1, 4).unwrap();
+    if date < min_date {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Historical data only available from 1999-01-04 onwards".to_string(),
+        ));
+    }
+
     let upstream_manager = match state.upstream_manager.as_ref() {
         Some(m) => m,
         None => {
