@@ -1,4 +1,4 @@
-FROM rust:1.82-slim AS builder
+FROM rust:1.83-slim AS builder
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -9,6 +9,7 @@ WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo fetch
 RUN cargo build --release && rm -rf src
 
 COPY src ./src
