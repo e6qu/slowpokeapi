@@ -1,39 +1,55 @@
 # What We Did
 
-## 2026-03-03: Phase 18 In Progress - Docker & Container 🔄
+## 2026-03-03: Phase 19 In Progress - Helm Chart 🔄
 
-### PR #: Docker & Container
+### PR #: Helm Chart
 
 **Status:** In Progress
 
 #### Completed Tasks
 
-1. **Multi-Stage Dockerfile**
-   - Production-ready distroless image (~25MB)
-   - rust:1.82-slim build stage
-   - gcr.io/distroless/cc-debian12:latest runtime
-   - Dependency caching for faster builds
-   - Non-root user execution
+1. **Helm Chart Structure**
+   - Chart.yaml with metadata (version 1.0.0, appVersion 1.0.0)
+   - values.yaml with sensible defaults
+   - _helpers.tpl with label helpers
 
-2. **Debug Dockerfile**
-   - debian:bookworm-slim base with shell access
-   - Includes curl, sqlite3 for troubleshooting
-   - Same binary as production image
+2. **Workload Templates**
+   - deployment.yaml for stateless deployments
+   - statefulset.yaml for persistent deployments with PVC
 
-3. **Docker Compose Files**
-   - `docker-compose.yml` - Single instance setup
-   - `docker-compose.cluster.yml` - 3-replica cluster
-   - Health checks via curl
-   - Named volumes for persistence
+3. **Networking Templates**
+   - service.yaml (ClusterIP + headless for StatefulSet)
+   - ingress.yaml with TLS support
+   - configmap.yaml for configuration
 
-4. **Nginx Load Balancer**
-   - `docker/nginx.conf` for cluster setup
-   - Round-robin load balancing across replicas
-   - Proxy headers configured
+4. **Scaling & Reliability**
+   - hpa.yaml for horizontal pod autoscaling
+   - pdb.yaml for pod disruption budgets
+   - servicemonitor.yaml for Prometheus integration
 
-5. **Build Optimization**
-   - `.dockerignore` excludes unnecessary files
-   - Entrypoint script for data directory initialization
+5. **Security**
+   - serviceaccount.yaml with configurable creation
+   - secret.yaml for sensitive data
+   - Non-root security context
+
+6. **Production Values**
+   - values-prod.yaml for production deployments
+   - Autoscaling enabled
+   - PDB for high availability
+   - ServiceMonitor for Prometheus
+
+7. **Documentation**
+   - Chart README.md with usage examples
+   - Configuration table
+   - Installation/upgrade/uninstall guides
+
+---
+
+## 2026-03-03: Phase 18 Complete - Docker & Container ✅
+
+### PR #22: Docker & Container
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/22
 
 ---
 

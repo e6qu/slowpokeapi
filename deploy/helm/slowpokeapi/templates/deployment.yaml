@@ -1,0 +1,112 @@
+{{- if not .Values.statefulSet.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slowpokeapi.fullname" . }}
+  labels:
+    {{- include "slowpokeapi.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "slowpokeapi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "slowpokeapi.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "slowpokeapi.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: sync
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: SLOWPOKEAPI_SERVER__HOST
+              value: "0.0.0.0"
+            - name: SLOWPOKEAPI_SERVER__PORT
+              value: "8080"
+            - name: SLOWPOKEAPI_LOGGING__LEVEL
+              value: {{ .Values.config.logLevel }}
+            - name: SLOWPOKEAPI_DATABASE__URL
+              value: {{ if .Values.persistence.enabled }}/data/slowpokeapi.db{{ else }}sqlite::memory:{{ end }}
+            - name: SLOWPOKEAPI_CACHE__MAX_CAPACITY
+              value: "10000"
+            - name: SLOWPOKEAPI_CACHE__TTL_SECONDS
+              value: {{ .Values.config.cacheTtlSeconds | quote }}
+            - name: SLOWPOKEAPI_SYNC__ENABLED
+              value: {{ .Values.sync.enabled | quote }}
+            {{- if .Values.sync.enabled }}
+            - name: SLOWPOKEAPI_SYNC__PEER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "slowpokeapi.fullname" . }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 1
+            failureThreshold: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
