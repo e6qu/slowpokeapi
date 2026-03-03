@@ -1,0 +1,22 @@
+services:
+  slowpokeapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    image: slowpokeapi:debug
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - slowpokeapi-data:/data
+    environment:
+      - SLOWPOKEAPI_LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  slowpokeapi-data:
