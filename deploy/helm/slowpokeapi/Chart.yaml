@@ -1,0 +1,16 @@
+apiVersion: v2
+name: slowpokeapi
+description: Currency exchange rate API with distributed sync
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - currency
+  - exchange-rates
+  - api
+home: https://github.com/e6qu/slowpokeapi
+sources:
+  - https://github.com/e6qu/slowpokeapi
+maintainers:
+  - name: e6qu
+    url: https://github.com/e6qu

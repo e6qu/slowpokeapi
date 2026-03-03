@@ -1,44 +1,42 @@
 # Do Next
-## Phase 19: Helm Chart
+## Phase 20: Terraform ECS
 ### Goal
 
-Create Helm chart for Kubernetes deployment.
+Create Terraform configuration for AWS ECS deployment.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 19.1 | Create Helm chart structure | `deploy/helm/slowpokeapi/` | Pending |
-| 19.2 | Create Chart.yaml | `deploy/helm/slowpokeapi/Chart.yaml` | Pending |
-| 19.3 | Create values.yaml | `deploy/helm/slowpokeapi/values.yaml` | Pending |
-| 19.4 | Create deployment template | `deploy/helm/slowpokeapi/templates/deployment.yaml` | Pending |
-| 19.5 | Create service template | `deploy/helm/slowpokeapi/templates/service.yaml` | Pending |
-| 19.6 | Create configmap template | `deploy/helm/slowpokeapi/templates/configmap.yaml` | Pending |
-| 19.7 | Create ingress template | `deploy/helm/slowpokeapi/templates/ingress.yaml` | Pending |
-| 19.8 | Create statefulset template | `deploy/helm/slowpokeapi/templates/statefulset.yaml` | Pending |
-| 19.9 | Create HPA template | `deploy/helm/slowpokeapi/templates/hpa.yaml` | Pending |
-| 19.10 | Create ServiceMonitor template | `deploy/helm/slowpokeapi/templates/servicemonitor.yaml` | Pending |
-| 19.11 | Create values-prod.yaml | `deploy/helm/slowpokeapi/values-prod.yaml` | Pending |
-| 19.12 | Test helm template rendering | - | Pending |
+| 20.1 | Create Terraform structure | `deploy/terraform/` | Pending |
+| 20.2 | Create versions.tf | `deploy/terraform/versions.tf` | Pending |
+| 20.3 | Create variables.tf | `deploy/terraform/variables.tf` | Pending |
+| 20.4 | Create vpc.tf | `deploy/terraform/vpc.tf` | Pending |
+| 20.5 | Create security.tf | `deploy/terraform/security.tf` | Pending |
+| 20.6 | Create alb.tf | `deploy/terraform/alb.tf` | Pending |
+| 20.7 | Create ecs.tf | `deploy/terraform/ecs.tf` | Pending |
+| 20.8 | Create efs.tf | `deploy/terraform/efs.tf` | Pending |
+| 20.9 | Create autoscaling.tf | `deploy/terraform/autoscaling.tf` | Pending |
+| 20.10 | Create cloudwatch.tf | `deploy/terraform/cloudwatch.tf` | Pending |
+| 20.11 | Create outputs.tf | `deploy/terraform/outputs.tf` | Pending |
+| 20.12 | Create prod.tfvars | `deploy/terraform/environments/prod.tfvars` | Pending |
+| 20.13 | Test terraform plan | - | Pending |
 
 ### Deliverables
 
-- Complete Helm chart
-- Production values file
-- StatefulSet support with PVC
+- Complete Terraform configuration
+- ECS Fargate deployment
+- ALB with HTTPS
+- Optional EFS persistence
+- Auto-scaling configuration
 
 ### Acceptance Criteria
-- [ ] Helm chart structure created
-- [ ] Chart.yaml with metadata
-- [ ] values.yaml with defaults
-- [ ] Deployment template
-- [ ] Service template
-- [ ] ConfigMap template
-- [ ] Ingress template
-- [ ] StatefulSet template
-- [ ] HPA template
-- [ ] ServiceMonitor template
-- [ ] values-prod.yaml
+- [ ] Terraform structure created
+- [ ] VPC with public/private subnets
+- [ ] Security groups configured
+- [ ] ALB with target group
+- [ ] ECS cluster with service and task definition
+- [ ] CloudWatch alarms
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -49,14 +47,14 @@ Create Helm chart for Kubernetes deployment.
 cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
-helm template slowpokeapi deploy/helm/slowpokeapi
+terraform -chdir=deploy/terraform plan
 ```
 
 ### After completion
-1. Update PLAN.md - Mark Phase 19 complete
-2. Update STATUS.md - Move to Phase 20
-3. Update WHAT_WE_DID.md - document Phase 19
-4. Update DO_NEXT.md - set up Phase 20 tasks
-5. Create feature branch for Phase 20
+1. Update PLAN.md - Mark Phase 20 complete
+2. Update STATUS.md - Move to Phase 21
+3. Update WHAT_WE_DID.md - document Phase 20
+4. Update DO_NEXT.md - set up Phase 21 tasks
+5. Create feature branch for Phase 21
 6. Create PR
 7. Ensure CI passes
