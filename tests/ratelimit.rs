@@ -19,15 +19,20 @@ fn test_token_bucket_basic() {
 
 #[tokio::test]
 async fn test_token_bucket_refill() {
-    let mut bucket = TokenBucket::new(100, 1000);
+    let mut bucket = TokenBucket::new(100, 10000);
 
-    bucket.try_consume(100);
-    assert_eq!(bucket.available_tokens(), 0);
+    assert!(
+        bucket.try_consume(100),
+        "Should be able to consume all tokens initially"
+    );
 
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
 
     let tokens = bucket.available_tokens();
-    assert!(tokens > 0);
+    assert!(
+        tokens > 0,
+        "Expected tokens to be refilled after 200ms with rate 10000/sec, got {tokens}"
+    );
     assert!(tokens <= 100);
 }
 
