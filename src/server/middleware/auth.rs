@@ -79,9 +79,9 @@ pub async fn auth_middleware(
 
     let mut response = next.run(request).await;
 
-    response
-        .headers_mut()
-        .insert("X-API-Key-Valid", "true".parse().unwrap());
+    if let Ok(value) = "true".parse() {
+        response.headers_mut().insert("X-API-Key-Valid", value);
+    }
 
     Ok(response)
 }

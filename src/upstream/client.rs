@@ -13,7 +13,7 @@ impl HttpClient {
             .pool_idle_timeout(Duration::from_secs(60))
             .user_agent("SlowPokeAPI/0.1.0")
             .build()
-            .expect("Failed to create HTTP client");
+            .expect("Failed to create HTTP client - this should never happen with valid TLS configuration");
 
         Self { client }
     }

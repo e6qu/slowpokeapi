@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Json;
 
 use crate::cache::Cache;
-use crate::models::{PairResponse, RateCollection, ResponseResult};
+use crate::models::{is_crypto_code, is_metal_code, PairResponse, RateCollection, ResponseResult};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -36,17 +36,15 @@ pub async fn get_pair(
     let target = target_code.to_uppercase();
     let amount = params.amount;
 
-    if base.len() != 3 || !base.chars().all(|c| c.is_ascii_uppercase()) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            format!("Invalid base currency code: {base}"),
-        ));
-    }
+    let is_crypto = is_crypto_code(&base) || is_crypto_code(&target);
+    let is_metal = is_metal_code(&base) || is_metal_code(&target);
+    let is_fiat = (base.len() == 3 && base.chars().all(|c| c.is_ascii_uppercase()))
+        && (target.len() == 3 && target.chars().all(|c| c.is_ascii_uppercase()));
 
-    if target.len() != 3 || !target.chars().all(|c| c.is_ascii_uppercase()) {
+    if !is_fiat && !is_crypto && !is_metal {
         return Err((
             StatusCode::BAD_REQUEST,
-            format!("Invalid target currency code: {target}"),
+            "Invalid currency code. Must be a 3-letter fiat code (USD, EUR), crypto (BTC, ETH), or metal (XAU, XAG)".to_string(),
         ));
     }
 
@@ -62,8 +60,10 @@ pub async fn get_pair(
     let cache_key = format!("pair:{base}:{target}");
 
     if let Some(ref cache) = state.rate_cache {
-        if let Ok(Some(rates)) = cache.get(&cache_key).await {
-            return Ok(Json(build_response(&rates, &target, amount)));
+        match cache.get(&cache_key).await {
+            Ok(Some(rates)) => return Ok(Json(build_response(&rates, &target, amount))),
+            Ok(None) => {}
+            Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
         }
     }
 
@@ -80,7 +80,9 @@ pub async fn get_pair(
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
             if let Some(ref cache) = state.rate_cache {
-                let _ = cache.set(cache_key.clone(), rates.clone(), None).await;
+                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                    tracing::warn!("Cache set error: {}", e);
+                }
             }
             Ok(Json(build_response(&rates, &target, amount)))
         }

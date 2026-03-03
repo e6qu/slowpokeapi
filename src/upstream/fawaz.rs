@@ -13,11 +13,15 @@ const BASE_URL: &str = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@l
 
 pub struct FawazClient {
     http: Arc<HttpClient>,
+    healthy: std::sync::atomic::AtomicBool,
 }
 
 impl FawazClient {
     pub fn new(http: Arc<HttpClient>) -> Self {
-        Self { http }
+        Self {
+            http,
+            healthy: std::sync::atomic::AtomicBool::new(true),
+        }
     }
 }
 
@@ -32,6 +36,8 @@ impl Upstream for FawazClient {
 
         let response = self.http.inner().get(&url).send().await.map_err(|e| {
             UPSTREAM_METRICS.record_error("fawaz");
+            self.healthy
+                .store(false, std::sync::atomic::Ordering::SeqCst);
             Error::Internal(format!("FawazAhmed request failed: {e}"))
         })?;
 
@@ -70,54 +76,10 @@ impl Upstream for FawazClient {
         })
     }
 
-    async fn get_historical_rates(&self, base: &str, date: NaiveDate) -> Result<HistoricalRate> {
-        let start = std::time::Instant::now();
-        let base_lower = base.to_lowercase();
-        let _date_str = date.format("%Y-%m-%d");
-        let url = format!("{BASE_URL}/currencies/{base_lower}.json");
-
-        UPSTREAM_METRICS.record_request("fawaz");
-
-        let response = self.http.inner().get(&url).send().await.map_err(|e| {
-            UPSTREAM_METRICS.record_error("fawaz");
-            Error::Internal(format!("FawazAhmed historical request failed: {e}"))
-        })?;
-
-        UPSTREAM_METRICS.observe_latency("fawaz", start.elapsed());
-
-        if response.status() == StatusCode::NOT_FOUND {
-            return Err(Error::NotFound(format!(
-                "Historical rates not found for date: {date}"
-            )));
-        }
-
-        if !response.status().is_success() {
-            UPSTREAM_METRICS.record_error("fawaz");
-            return Err(Error::Internal(format!(
-                "FawazAhmed returned status: {}",
-                response.status()
-            )));
-        }
-
-        let json: serde_json::Value = response.json().await.map_err(|e| {
-            UPSTREAM_METRICS.record_error("fawaz");
-            Error::Internal(format!("Failed to parse FawazAhmed response: {e}"))
-        })?;
-
-        let rates_map: HashMap<String, f64> = json
-            .get(&base_lower)
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
-            .ok_or_else(|| {
-                UPSTREAM_METRICS.record_error("fawaz");
-                Error::Internal("Invalid response from FawazAhmed: missing rates".to_string())
-            })?;
-
-        Ok(HistoricalRate {
-            base_code: base.to_uppercase(),
-            date,
-            rates: rates_map,
-            source: Source::FawazAhmed,
-        })
+    async fn get_historical_rates(&self, _base: &str, _date: NaiveDate) -> Result<HistoricalRate> {
+        Err(Error::Internal(
+            "Historical rates are not supported by this upstream provider".to_string(),
+        ))
     }
 
     fn name(&self) -> &'static str {
@@ -125,6 +87,6 @@ impl Upstream for FawazClient {
     }
 
     fn is_healthy(&self) -> bool {
-        true
+        self.healthy.load(std::sync::atomic::Ordering::SeqCst)
     }
 }

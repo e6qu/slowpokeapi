@@ -23,7 +23,11 @@ async fn main() {
     let db_pool = if settings.database.url.starts_with("sqlite:")
         && !settings.database.url.contains(":memory:")
     {
-        let db_path = settings.database.url.strip_prefix("sqlite:").unwrap();
+        let db_path = settings
+            .database
+            .url
+            .strip_prefix("sqlite:")
+            .unwrap_or(&settings.database.url);
         if let Some(parent) = Path::new(db_path).parent() {
             if !parent.exists() {
                 std::fs::create_dir_all(parent).expect("Failed to create database directory");

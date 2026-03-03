@@ -37,7 +37,10 @@ impl CrdtDocument {
 
     pub fn get_state(&self) -> Vec<u8> {
         bincode::serialize(&(self.rates.clone(), self.base_code.clone(), self.timestamp))
-            .unwrap_or_default()
+            .unwrap_or_else(|e| {
+                tracing::error!("CRDT serialization failed: {}", e);
+                Vec::new()
+            })
     }
 
     pub fn apply_state(&mut self, state: &[u8]) -> SyncResult<()> {

@@ -117,6 +117,12 @@ impl Upstream for CoinCapClient {
                 Error::Internal("Invalid response from CoinCap: missing priceUsd".to_string())
             })?;
 
+        if usd_price <= 0.0 {
+            return Err(Error::Internal(format!(
+                "Invalid price for {base}: {usd_price}"
+            )));
+        }
+
         let mut rates: HashMap<String, f64> = HashMap::new();
         rates.insert("USD".to_string(), 1.0 / usd_price);
         rates.insert(base.to_uppercase(), 1.0);
@@ -137,12 +143,12 @@ impl Upstream for CoinCapClient {
 
         let date_start = date
             .and_hms_opt(0, 0, 0)
-            .unwrap()
+            .ok_or_else(|| Error::Internal("Invalid date for historical lookup".to_string()))?
             .and_utc()
             .timestamp_millis();
         let date_end = date
             .and_hms_opt(23, 59, 59)
-            .unwrap()
+            .ok_or_else(|| Error::Internal("Invalid date for historical lookup".to_string()))?
             .and_utc()
             .timestamp_millis();
 
@@ -191,6 +197,12 @@ impl Upstream for CoinCapClient {
                 UPSTREAM_METRICS.record_error("coincap");
                 Error::Internal("Invalid response from CoinCap: missing priceUsd".to_string())
             })?;
+
+        if usd_price <= 0.0 {
+            return Err(Error::Internal(format!(
+                "Invalid price for {base} on {date}: {usd_price}"
+            )));
+        }
 
         let mut rates: HashMap<String, f64> = HashMap::new();
         rates.insert("USD".to_string(), 1.0 / usd_price);
