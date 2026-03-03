@@ -1,31 +1,35 @@
 # Do Next
-## Phase 15: Sync Integration
+## Phase 16: Rate Limiting & Quota
 ### Goal
 
-Integrate sync engine with cache and storage layers.
+Implement per-API-key rate limiting and quota tracking.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 15.1 | Hook cache updates to sync | `src/cache/tiered.rs` | Pending |
-| 15.2 | Hook sync updates to cache | `src/sync/integration.rs` | Pending |
-| 15.3 | Implement reconciliation | `src/sync/reconciliation.rs` | Pending |
-| 15.4 | Add sync configuration | `src/config/settings.rs` | Pending |
-| 15.5 | Update health check for sync | `src/handlers/health.rs` | Pending |
-| 15.6 | Test full sync flow | `tests/integration.rs` | Pending |
+| 16.1 | Create rate limit module | `src/ratelimit/mod.rs` | Pending |
+| 16.2 | Implement token bucket | `src/ratelimit/token_bucket.rs` | Pending |
+| 16.3 | Implement API key store | `src/storage/api_keys.rs` | Pending |
+| 16.4 | Create rate limit middleware | `src/server/middleware/ratelimit.rs` | Pending |
+| 16.5 | Implement `/v1/quota` endpoint | `src/handlers/quota.rs` | Pending |
+| 16.6 | Add rate limit headers | `src/server/middleware/ratelimit.rs` | Pending |
+| 16.7 | Add OpenAPI annotations | `src/handlers/quota.rs` | Pending |
+| 16.8 | Test rate limiting | `tests/ratelimit.rs` | Pending |
 
 ### Deliverables
 
-- Automatic sync on rate updates
-- Reconciliation between SQLite and CRDT
+- Rate limiting middleware
+- `GET /v1/quota` endpoint
+- Rate limit headers in responses
 
 ### Acceptance Criteria
-- [ ] Cache updates trigger sync
-- [ ] Sync updates update cache
-- [ ] Reconciliation implemented
-- [ ] Sync configuration added
-- [ ] Health check includes sync
+- [ ] Token bucket algorithm implemented
+- [ ] API key storage in SQLite
+- [ ] Rate limit middleware created
+- [ ] Quota endpoint returns usage info
+- [ ] Rate limit headers included
+- [ ] OpenAPI documentation updated
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -39,10 +43,10 @@ cargo fmt --check
 ```
 
 ### After completion
-1. Update PLAN.md - Mark Phase 15 complete
-2. Update STATUS.md - Move to Phase 16
-3. Update WHAT_WE_DID.md - document Phase 15
-4. Update DO_NEXT.md - set up Phase 16 tasks
-5. Create feature branch for Phase 16
+1. Update PLAN.md - Mark Phase 16 complete
+2. Update STATUS.md - Move to Phase 17
+3. Update WHAT_WE_DID.md - document Phase 16
+4. Update DO_NEXT.md - set up Phase 17 tasks
+5. Create feature branch for Phase 17
 6. Create PR
 7. Ensure CI passes

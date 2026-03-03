@@ -8,6 +8,8 @@ pub struct Settings {
     pub logging: LoggingConfig,
     pub database: DatabaseConfig,
     pub cache: CacheConfig,
+    #[serde(default)]
+    pub sync: SyncConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -38,6 +40,25 @@ impl Default for CacheConfig {
         Self {
             max_capacity: 10_000,
             ttl_seconds: 3600,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct SyncConfig {
+    pub enabled: bool,
+    pub peer_id: String,
+    pub sync_interval_ms: u64,
+    pub peer_timeout_ms: u64,
+}
+
+impl Default for SyncConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            peer_id: uuid::Uuid::new_v4().to_string(),
+            sync_interval_ms: 5000,
+            peer_timeout_ms: 60000,
         }
     }
 }

@@ -123,6 +123,20 @@ pub async fn health(State(state): State<AppState>) -> impl IntoResponse {
         );
     }
 
+    if state.config.sync.enabled {
+        checks.insert(
+            "sync".to_string(),
+            HealthCheck {
+                status: "pass".to_string(),
+                message: Some(format!(
+                    "Sync enabled (peer_id: {})",
+                    state.config.sync.peer_id
+                )),
+                latency_ms: None,
+            },
+        );
+    }
+
     let uptime = state.start_time.elapsed().as_secs();
 
     let response = HealthResponse {
