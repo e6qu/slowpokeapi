@@ -26,9 +26,10 @@ sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio",
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 moka = { version = "0.12", features = ["sync"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+wiremock = "0.6"
 
 [profile.release]
 opt-level = 3

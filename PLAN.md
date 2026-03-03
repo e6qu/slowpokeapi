@@ -27,8 +27,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 4 | SQLite Storage Layer | ✅ Complete |
 | 5 | Data Models | ✅ Complete |
 | 6 | Cache Layer | ✅ Complete |
-| 7 | Upstream API Clients | 🔄 In Progress |
-| 8 | Currencies Endpoint | Pending |
+| 7 | Upstream API Clients | ✅ Complete |
+| 8 | Currencies Endpoint | 🔄 In Progress |
 | 9 | Latest Rates Endpoint | Pending |
 | 10 | Pair Conversion Endpoint | Pending |
 | 11 | Historical Rates Endpoint | Pending |
@@ -46,6 +46,6 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 ## Current Phase
 
-**Phase 7: Upstream API Clients** (In Progress)
+**Phase 8: Currencies Endpoint** (In Progress)
 
 See `DO_NEXT.md` for tasks.
