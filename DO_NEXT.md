@@ -1,60 +1,51 @@
 # Do Next
-## Phase 20: Terraform ECS
+## Phase 21: CI/CD Pipeline
 ### Goal
 
-Create Terraform configuration for AWS ECS deployment.
+Set up GitHub Actions for build, test, and release.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 20.1 | Create Terraform structure | `deploy/terraform/` | Pending |
-| 20.2 | Create versions.tf | `deploy/terraform/versions.tf` | Pending |
-| 20.3 | Create variables.tf | `deploy/terraform/variables.tf` | Pending |
-| 20.4 | Create vpc.tf | `deploy/terraform/vpc.tf` | Pending |
-| 20.5 | Create security.tf | `deploy/terraform/security.tf` | Pending |
-| 20.6 | Create alb.tf | `deploy/terraform/alb.tf` | Pending |
-| 20.7 | Create ecs.tf | `deploy/terraform/ecs.tf` | Pending |
-| 20.8 | Create efs.tf | `deploy/terraform/efs.tf` | Pending |
-| 20.9 | Create autoscaling.tf | `deploy/terraform/autoscaling.tf` | Pending |
-| 20.10 | Create cloudwatch.tf | `deploy/terraform/cloudwatch.tf` | Pending |
-| 20.11 | Create outputs.tf | `deploy/terraform/outputs.tf` | Pending |
-| 20.12 | Create prod.tfvars | `deploy/terraform/environments/prod.tfvars` | Pending |
-| 20.13 | Test terraform plan | - | Pending |
+| 21.1 | Create CI workflow | `.github/workflows/ci.yml` | Pending |
+| 21.2 | Add lint job (clippy, fmt) | `.github/workflows/ci.yml` | Pending |
+| 21.3 | Add test job | `.github/workflows/ci.yml` | Pending |
+| 21.4 | Add security audit job | `.github/workflows/ci.yml` | Pending |
+| 21.5 | Create release workflow | `.github/workflows/release.yml` | Pending |
+| 21.6 | Add binary build matrix | `.github/workflows/release.yml` | Pending |
+| 21.7 | Add container build and push | `.github/workflows/release.yml` | Pending |
+| 21.8 | Add Helm chart publish | `.github/workflows/release.yml` | Pending |
+| 21.9 | Create dependabot config | `.github/dependabot.yml` | Pending |
+| 21.10 | Test CI pipeline | - | Pending |
 
 ### Deliverables
 
-- Complete Terraform configuration
-- ECS Fargate deployment
-- ALB with HTTPS
-- Optional EFS persistence
-- Auto-scaling configuration
+- Automated CI on PRs
+- Release workflow for binaries, containers, and Helm
 
 ### Acceptance Criteria
-- [ ] Terraform structure created
-- [ ] VPC with public/private subnets
-- [ ] Security groups configured
-- [ ] ALB with target group
-- [ ] ECS cluster with service and task definition
-- [ ] CloudWatch alarms
-- [ ] Tests pass
-- [ ] Clippy passes with no warnings
-- [ ] Format check passes
-- [ ] CI passes
+- [ ] CI workflow created
+- [ ] Lint job passes
+- [ ] Test job passes
+- [ ] Security audit job passes
+- [ ] Release workflow created
+- [ ] Binary builds work
+- [ ] Container builds work
+- [ ] Helm chart publishes
 
 ### Verification commands
 ```bash
 cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
-terraform -chdir=deploy/terraform plan
 ```
 
 ### After completion
-1. Update PLAN.md - Mark Phase 20 complete
-2. Update STATUS.md - Move to Phase 21
-3. Update WHAT_WE_DID.md - document Phase 20
-4. Update DO_NEXT.md - set up Phase 21 tasks
-5. Create feature branch for Phase 21
+1. Update PLAN.md - Mark Phase 21 complete
+2. Update STATUS.md - Move to Phase 22
+3. Update WHAT_WE_DID.md - document Phase 21
+4. Update DO_NEXT.md - set up Phase 22 tasks
+5. Create feature branch for Phase 22
 6. Create PR
 7. Ensure CI passes
