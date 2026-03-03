@@ -7,6 +7,7 @@ pub mod metrics;
 pub mod models;
 pub mod server;
 pub mod storage;
+pub mod sync;
 pub mod upstream;
 pub use config::Settings;
 pub use models::error::{Error, Result};

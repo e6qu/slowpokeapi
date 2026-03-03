@@ -1,0 +1,61 @@
+use once_cell::sync::Lazy;
+use prometheus::{Counter, Gauge, Registry};
+
+pub static SYNC_METRICS: Lazy<SyncMetrics> = Lazy::new(SyncMetrics::new);
+
+pub struct SyncMetrics {
+    pub sync_operations_total: Counter,
+    pub sync_errors_total: Counter,
+    pub peers_connected: Gauge,
+    pub document_size_bytes: Gauge,
+}
+
+impl SyncMetrics {
+    fn new() -> Self {
+        let registry = Registry::new();
+
+        let sync_operations_total = Counter::new(
+            "slowpokeapi_sync_operations_total",
+            "Total number of sync operations",
+        )
+        .unwrap();
+
+        let sync_errors_total = Counter::new(
+            "slowpokeapi_sync_errors_total",
+            "Total number of sync errors",
+        )
+        .unwrap();
+
+        let peers_connected = Gauge::new(
+            "slowpokeapi_peers_connected",
+            "Number of peers currently connected",
+        )
+        .unwrap();
+
+        let document_size_bytes = Gauge::new(
+            "slowpokeapi_document_size_bytes",
+            "Size of CRDT document in bytes",
+        )
+        .unwrap();
+
+        registry
+            .register(Box::new(sync_operations_total.clone()))
+            .unwrap();
+        registry
+            .register(Box::new(sync_errors_total.clone()))
+            .unwrap();
+        registry
+            .register(Box::new(peers_connected.clone()))
+            .unwrap();
+        registry
+            .register(Box::new(document_size_bytes.clone()))
+            .unwrap();
+
+        Self {
+            sync_operations_total,
+            sync_errors_total,
+            peers_connected,
+            document_size_bytes,
+        }
+    }
+}
