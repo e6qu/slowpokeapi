@@ -43,8 +43,10 @@ pub async fn get_latest(
     let cache_key = format!("latest:{base}");
 
     if let Some(ref cache) = state.rate_cache {
-        if let Ok(Some(rates)) = cache.get(&cache_key).await {
-            return Ok(Json(build_response(&rates)));
+        match cache.get(&cache_key).await {
+            Ok(Some(rates)) => return Ok(Json(build_response(&rates))),
+            Ok(None) => {}
+            Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
         }
     }
 
@@ -61,7 +63,10 @@ pub async fn get_latest(
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
             if let Some(ref cache) = state.rate_cache {
-                let _ = cache.set(cache_key.clone(), rates.clone(), None).await;
+                let key = cache_key.clone();
+                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                    tracing::warn!("Cache set error for {}: {}", key, e);
+                }
             }
             Ok(Json(build_response(&rates)))
         }

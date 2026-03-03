@@ -115,7 +115,9 @@ impl Upstream for CoinGeckoClient {
         if let Some(obj) = prices.as_object() {
             for (currency, price_val) in obj {
                 if let Some(price) = price_val.as_f64() {
-                    rates.insert(currency.to_uppercase(), 1.0 / price);
+                    if price > 0.0 {
+                        rates.insert(currency.to_uppercase(), 1.0 / price);
+                    }
                 }
             }
         }
@@ -137,8 +139,12 @@ impl Upstream for CoinGeckoClient {
             .ok_or_else(|| Error::NotFound(format!("Cryptocurrency not supported: {base}")))?;
 
         let now = chrono::Utc::now();
-        let date_dt =
-            chrono::TimeZone::from_utc_datetime(&chrono::Utc, &date.and_hms_opt(0, 0, 0).unwrap());
+        let date_dt = chrono::TimeZone::from_utc_datetime(
+            &chrono::Utc,
+            &date
+                .and_hms_opt(0, 0, 0)
+                .ok_or_else(|| Error::Internal("Invalid date for historical lookup".to_string()))?,
+        );
         let days = (now - date_dt).num_days().max(0);
 
         let url = format!(
@@ -179,7 +185,7 @@ impl Upstream for CoinGeckoClient {
 
         let date_ts = date
             .and_hms_opt(0, 0, 0)
-            .unwrap()
+            .ok_or_else(|| Error::Internal("Invalid date for historical lookup".to_string()))?
             .and_utc()
             .timestamp_millis();
         let mut closest_price: Option<f64> = None;
@@ -202,6 +208,12 @@ impl Upstream for CoinGeckoClient {
         let usd_rate = closest_price.ok_or_else(|| {
             Error::NotFound(format!("Historical price not found for {base} on {date}"))
         })?;
+
+        if usd_rate <= 0.0 {
+            return Err(Error::Internal(format!(
+                "Invalid price for {base} on {date}: {usd_rate}"
+            )));
+        }
 
         let mut rates: HashMap<String, f64> = HashMap::new();
         rates.insert("USD".to_string(), 1.0 / usd_rate);

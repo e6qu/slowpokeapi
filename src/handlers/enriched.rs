@@ -146,9 +146,13 @@ pub async fn get_enriched(
     let cache_key = format!("pair:{base}:{target}");
 
     if let Some(ref cache) = state.rate_cache {
-        if let Ok(Some(rates)) = cache.get(&cache_key).await {
-            let rate = rates.rates.get(&target).copied().unwrap_or(0.0);
-            return Ok(Json(build_response(rate, target_metadata)));
+        match cache.get(&cache_key).await {
+            Ok(Some(rates)) => {
+                let rate = rates.rates.get(&target).copied().unwrap_or(0.0);
+                return Ok(Json(build_response(&base, rate, target_metadata)));
+            }
+            Ok(None) => {}
+            Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
         }
     }
 
@@ -165,23 +169,29 @@ pub async fn get_enriched(
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
             if let Some(ref cache) = state.rate_cache {
-                let _ = cache.set(cache_key, rates.clone(), None).await;
+                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                    tracing::warn!("Cache set error: {}", e);
+                }
             }
             let rate = rates.rates.get(&target).copied().unwrap_or(0.0);
-            Ok(Json(build_response(rate, target_metadata)))
+            Ok(Json(build_response(&base, rate, target_metadata)))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_response(conversion_rate: f64, target_data: CurrencyMetadata) -> EnrichedResponse {
+fn build_response(
+    base_code: &str,
+    conversion_rate: f64,
+    target_data: CurrencyMetadata,
+) -> EnrichedResponse {
     let now = chrono::Utc::now();
 
     EnrichedResponse {
         result: ResponseResult::Success,
         time_last_update_unix: now.timestamp(),
         time_last_update_utc: now.to_rfc3339(),
-        base_code: target_data.code.clone(),
+        base_code: base_code.to_uppercase(),
         target_code: target_data.code.clone(),
         conversion_rate,
         target_data,

@@ -28,28 +28,25 @@ impl IntoResponse for RateLimitMiddlewareError {
             Self::RateExceeded { retry_after } => {
                 let mut response = Response::new(Body::from("Rate limit exceeded"));
                 *response.status_mut() = StatusCode::TOO_MANY_REQUESTS;
-                response.headers_mut().insert(
-                    "Retry-After",
-                    retry_after.as_secs().to_string().parse().unwrap(),
-                );
+                if let Ok(value) = retry_after.as_secs().to_string().parse() {
+                    response.headers_mut().insert("Retry-After", value);
+                }
                 response
             }
             Self::BackoffRequired { retry_after } => {
                 let mut response = Response::new(Body::from("Too many requests, please back off"));
                 *response.status_mut() = StatusCode::TOO_MANY_REQUESTS;
-                response.headers_mut().insert(
-                    "Retry-After",
-                    retry_after.as_secs().to_string().parse().unwrap(),
-                );
+                if let Ok(value) = retry_after.as_secs().to_string().parse() {
+                    response.headers_mut().insert("Retry-After", value);
+                }
                 response
             }
             Self::ServiceUnavailable { retry_after } => {
                 let mut response = Response::new(Body::from("Service temporarily unavailable"));
                 *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;
-                response.headers_mut().insert(
-                    "Retry-After",
-                    retry_after.as_secs().to_string().parse().unwrap(),
-                );
+                if let Ok(value) = retry_after.as_secs().to_string().parse() {
+                    response.headers_mut().insert("Retry-After", value);
+                }
                 response
             }
         }
@@ -126,7 +123,9 @@ fn add_rate_limit_headers(response: &mut Response, info: &RateLimitInfo) {
     }
 
     if info.backpressure {
-        headers.insert("X-RateLimit-Backpressure", "true".parse().unwrap());
+        if let Ok(value) = "true".parse() {
+            headers.insert("X-RateLimit-Backpressure", value);
+        }
     }
 
     if let Some(retry_after) = info.retry_after {
