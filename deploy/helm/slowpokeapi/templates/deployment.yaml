@@ -48,15 +48,15 @@ spec:
             - name: SLOWPOKEAPI_SERVER__PORT
               value: "8080"
             - name: SLOWPOKEAPI_LOGGING__LEVEL
-              value: {{ .Values.config.logLevel }}
+              value: "{{ .Values.config.logLevel }}"
             - name: SLOWPOKEAPI_DATABASE__URL
-              value: {{ if .Values.persistence.enabled }}/data/slowpokeapi.db{{ else }}sqlite::memory:{{ end }}
+              value: "{{ if .Values.persistence.enabled }}/data/slowpokeapi.db{{ else }}sqlite::memory:{{ end }}"
             - name: SLOWPOKEAPI_CACHE__MAX_CAPACITY
               value: "10000"
             - name: SLOWPOKEAPI_CACHE__TTL_SECONDS
               value: {{ .Values.config.cacheTtlSeconds | quote }}
             - name: SLOWPOKEAPI_SYNC__ENABLED
-              value: {{ .Values.sync.enabled | quote }}
+              value: "{{ .Values.sync.enabled }}"
             {{- if .Values.sync.enabled }}
             - name: SLOWPOKEAPI_SYNC__PEER_ID
               valueFrom:

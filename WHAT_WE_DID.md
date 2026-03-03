@@ -1,10 +1,55 @@
 # What We Did
 
-## 2026-03-03: Phase 20 Complete - Terraform ECS ✅
+## 2026-03-03: Phase 21 Complete - CI/CD Pipeline ✅
 
-### PR #: Terraform ECS
+### PR #: CI/CD Pipeline
 
 **Status:** Complete
+
+#### Completed Tasks
+
+1. **CI Workflow**
+   - Enhanced `.github/workflows/ci.yml`
+   - Check job with fmt, clippy, doc
+   - Test job with all features
+   - Security audit with cargo-audit
+   - Coverage with cargo-tarpaulin and codecov
+   - Container build test
+   - Helm lint and template test
+   - Improved caching with Swatinem/rust-cache
+
+2. **Release Workflow**
+   - Created `.github/workflows/release.yml`
+   - Triggered on version tags (v*)
+   - Binary builds for Linux, macOS (amd64/arm64), Windows
+   - Docker container build and push to GHCR
+   - Helm chart packaging and publishing
+   - GitHub release creation with assets
+
+3. **Dependabot Configuration**
+   - Created `.github/dependabot.yml`
+   - Weekly updates for Cargo dependencies
+   - Weekly updates for Docker base images
+   - Weekly updates for GitHub Actions
+   - Weekly updates for Terraform providers
+
+4. **Container Build**
+   - Multi-platform support (linux/amd64, linux/arm64)
+   - GitHub Container Registry integration
+   - Build caching with GitHub Actions cache
+
+5. **Helm Publishing**
+   - Chart versioning from release tags
+   - GitHub Pages deployment for chart repo
+   - Release asset upload
+
+---
+
+## 2026-03-03: Phase 20 Complete - Terraform ECS ✅
+
+### PR #24: Terraform ECS
+
+**Merged:** https://github.com/e6qu/slowpokeapi/pull/24
 
 #### Completed Tasks
 
