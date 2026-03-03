@@ -30,22 +30,24 @@ impl CircuitBreaker {
         }
     }
 
-    pub fn is_call_allowed(&self) -> bool {
-        let state = self.state.blocking_lock();
-        match *state {
+    fn check_reset_timeout(&self) -> bool {
+        let last_failure = self.last_failure_time.lock().unwrap();
+        if let Some(last) = *last_failure {
+            last.elapsed() > self.reset_timeout
+        } else {
+            false
+        }
+    }
+
+    pub async fn is_call_allowed(&self) -> bool {
+        let state = *self.state.lock().await;
+        match state {
             CircuitState::Closed => true,
             CircuitState::Open => {
-                let last_failure = self.last_failure_time.lock().unwrap();
-                if let Some(last) = *last_failure {
-                    if last.elapsed() > self.reset_timeout {
-                        drop(last_failure);
-                        drop(state);
-                        let mut state = self.state.blocking_lock();
-                        *state = CircuitState::HalfOpen;
-                        true
-                    } else {
-                        false
-                    }
+                if self.check_reset_timeout() {
+                    let mut state = self.state.lock().await;
+                    *state = CircuitState::HalfOpen;
+                    true
                 } else {
                     false
                 }
@@ -54,26 +56,27 @@ impl CircuitBreaker {
         }
     }
 
-    pub fn record_success(&self) {
-        let mut state = self.state.blocking_lock();
+    pub async fn record_success(&self) {
+        let mut state = self.state.lock().await;
         *state = CircuitState::Closed;
         self.failure_count.store(0, Ordering::SeqCst);
     }
 
-    pub fn record_failure(&self) {
+    pub async fn record_failure(&self) {
         let count = self.failure_count.fetch_add(1, Ordering::SeqCst) + 1;
-        let mut last_failure = self.last_failure_time.lock().unwrap();
-        *last_failure = Some(Instant::now());
-        drop(last_failure);
+        {
+            let mut last_failure = self.last_failure_time.lock().unwrap();
+            *last_failure = Some(Instant::now());
+        }
 
         if count >= self.failure_threshold {
-            let mut state = self.state.blocking_lock();
+            let mut state = self.state.lock().await;
             *state = CircuitState::Open;
         }
     }
 
-    pub fn state(&self) -> CircuitState {
-        *self.state.blocking_lock()
+    pub async fn state(&self) -> CircuitState {
+        *self.state.lock().await
     }
 }
 
@@ -91,7 +94,11 @@ impl Clone for CircuitBreaker {
             reset_timeout: self.reset_timeout,
             failure_count: AtomicU64::new(self.failure_count.load(Ordering::SeqCst)),
             last_failure_time: std::sync::Mutex::new(*self.last_failure_time.lock().unwrap()),
-            state: Mutex::new(*self.state.blocking_lock()),
+            state: Mutex::new(
+                tokio::runtime::Handle::try_current()
+                    .map(|h| h.block_on(async { *self.state.lock().await }))
+                    .unwrap_or(CircuitState::Closed),
+            ),
         }
     }
 }

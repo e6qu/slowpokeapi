@@ -33,17 +33,17 @@ impl UpstreamManager {
         for (i, client) in self.clients.iter().enumerate() {
             let circuit = &self.circuit_breakers[i];
 
-            if !circuit.is_call_allowed() {
+            if !circuit.is_call_allowed().await {
                 continue;
             }
 
             match client.get_latest_rates(base).await {
                 Ok(rates) => {
-                    circuit.record_success();
+                    circuit.record_success().await;
                     return Ok(rates);
                 }
                 Err(e) => {
-                    circuit.record_failure();
+                    circuit.record_failure().await;
                     last_error = Some(e);
                     continue;
                 }
@@ -64,17 +64,17 @@ impl UpstreamManager {
         for (i, client) in self.clients.iter().enumerate() {
             let circuit = &self.circuit_breakers[i];
 
-            if !circuit.is_call_allowed() {
+            if !circuit.is_call_allowed().await {
                 continue;
             }
 
             match client.get_historical_rates(base, date).await {
                 Ok(rates) => {
-                    circuit.record_success();
+                    circuit.record_success().await;
                     return Ok(rates);
                 }
                 Err(e) => {
-                    circuit.record_failure();
+                    circuit.record_failure().await;
                     last_error = Some(e);
                     continue;
                 }
