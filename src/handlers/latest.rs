@@ -3,7 +3,9 @@ use axum::http::StatusCode;
 use axum::Json;
 
 use crate::cache::Cache;
-use crate::models::{LatestRatesResponse, RateCollection, ResponseResult};
+use crate::models::{
+    is_crypto_code, is_metal_code, LatestRatesResponse, RateCollection, ResponseResult,
+};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -13,7 +15,7 @@ const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
     path = "/v1/latest/{base_code}",
     tag = "rates",
     params(
-        ("base_code" = String, description = "Three-letter currency code (e.g., USD, EUR)")
+        ("base_code" = String, description = "Three-letter currency code (e.g., USD, EUR) or crypto code (e.g., BTC, ETH)")
     ),
     responses(
         (status = 200, description = "Successful response", body = LatestRatesResponse),
@@ -26,10 +28,15 @@ pub async fn get_latest(
     Path(base_code): Path<String>,
 ) -> Result<Json<LatestRatesResponse>, (StatusCode, String)> {
     let base = base_code.to_uppercase();
-    if base.len() != 3 || !base.chars().all(|c| c.is_ascii_uppercase()) {
+
+    let is_crypto = is_crypto_code(&base);
+    let is_metal = is_metal_code(&base);
+    let is_fiat = base.len() == 3 && base.chars().all(|c| c.is_ascii_uppercase());
+
+    if !is_fiat && !is_crypto && !is_metal {
         return Err((
             StatusCode::BAD_REQUEST,
-            "Currency code must be 3 uppercase letters".to_string(),
+            "Invalid currency code. Must be a 3-letter fiat code (USD, EUR), crypto (BTC, ETH), or metal (XAU, XAG)".to_string(),
         ));
     }
 

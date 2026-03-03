@@ -6,9 +6,11 @@
 **Branch:** main (will create feature branch)
 **Last Updated:** 2026-03-03
 
-## Phase 15 Completed ✅
+## Phase 13 Completed ✅
 
-- Sync integration with cache layer
-- Reconciliation module implemented
-- Health check updated for sync status
-- Comprehensive test coverage
+- CoinGecko upstream client for cryptocurrency rates
+- CoinCap upstream client for cryptocurrency rates
+- Crypto/metal currency code definitions
+- Updated upstream manager to route crypto requests
+- Updated latest endpoint to support crypto codes
+- 14 comprehensive tests for crypto support
