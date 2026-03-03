@@ -2,6 +2,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::handlers::health::{HealthCheck, HealthResponse};
+use crate::models::CurrenciesResponse;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -19,17 +20,20 @@ use crate::handlers::health::{HealthCheck, HealthResponse};
         )
     ),
     tags(
-        (name = "system", description = "System health and status endpoints")
+        (name = "system", description = "System health and status endpoints"),
+        (name = "currencies", description = "Currency listing endpoints")
     ),
     paths(
         crate::handlers::health::healthz,
         crate::handlers::health::readyz,
         crate::handlers::health::livez,
         crate::handlers::health::health,
-        crate::handlers::metrics::metrics
+        crate::handlers::metrics::metrics,
+        crate::handlers::currencies::list_currencies,
+        crate::handlers::currencies::list_currencies_min
     ),
     components(
-        schemas(HealthResponse, HealthCheck)
+        schemas(HealthResponse, HealthCheck, CurrenciesResponse)
     )
 )]
 pub struct ApiDoc;
