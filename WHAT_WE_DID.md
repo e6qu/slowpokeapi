@@ -1,5 +1,57 @@
 # What We Did
 
+## 2026-03-03: Phase 16 Complete - Rate Limiting & Quota ✅
+
+### PR #21: Rate Limiting & Quota
+
+**Merged:** TBD
+
+#### Completed Tasks
+
+1. **Multi-Tier Rate Limiting**
+   - Global rate limiting for service protection
+   - Per-authenticated-user rate limiting
+   - Per-IP rate limiting for anonymous requests
+   - Token bucket algorithm with automatic refill
+
+2. **Safety Features**
+   - All services use half published rate (0.5x safety factor)
+   - Backpressure detection at 80% utilization
+   - Automatic 503 responses when overloaded
+   - Retry-After headers for client guidance
+
+3. **Backoff & Jitter**
+   - Exponential backoff for rate-limited clients
+   - Configurable jitter (0-5 seconds) to prevent thundering herd
+   - Client tracking for consecutive rejections
+   - Automatic backoff reset on successful requests
+
+4. **Rate Limit Configuration**
+   - `RateLimitConfig` with sensible defaults
+   - Global: 500 req/s, 1000 burst (effective: 250/500)
+   - Authenticated: 50 req/s, 100 burst (effective: 25/50)
+   - Anonymous: 10 req/s, 20 burst (effective: 5/10)
+   - Configurable backpressure threshold, jitter, and backoff
+
+5. **Middleware Integration**
+   - Rate limit middleware extracts API keys from headers
+   - Client IP detection via ConnectInfo
+   - Rate limit headers (Limit, Remaining, Reset, Retry-After)
+   - Backpressure warning header
+
+6. **Simplified API Key Model**
+   - Removed per-key rate limits (now uses global config)
+   - Simplified ApiKey struct (key, name, is_active)
+   - Updated storage layer accordingly
+
+7. **Comprehensive Tests**
+   - Token bucket creation and refill tests
+   - Effective rate calculation tests
+   - Backoff calculation tests
+   - Utilization tests
+
+---
+
 ## 2026-03-03: Phase 13 Complete - Cryptocurrency Support ✅
 
 ### PR #20: Cryptocurrency Support
@@ -220,6 +272,6 @@
 
 ---
 
-## Next: Phase 12 - Enriched Endpoint
+## Next: Phase 18 - Docker & Container
 
-Implementing enriched endpoint with currency metadata.
+Creating production-ready container configuration.

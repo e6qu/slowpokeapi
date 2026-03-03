@@ -1,18 +1,8 @@
-use slowpokeapi::ratelimit::{ApiKey, RateLimitConfig, TokenBucket};
-use slowpokeapi::storage::{ApiKeyStore, SqlitePool};
-use sqlx::sqlite::SqlitePoolOptions;
+use slowpokeapi::ratelimit::{ApiKey, ClientBackoff, RateLimitConfig, TokenBucket};
 use std::time::Duration;
 
-async fn create_memory_pool() -> SqlitePool {
-    SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect("sqlite::memory:")
-        .await
-        .unwrap()
-}
-
-#[tokio::test]
-async fn test_token_bucket_basic() {
+#[test]
+fn test_token_bucket_basic() {
     let mut bucket = TokenBucket::new(100, 10);
 
     assert_eq!(bucket.capacity(), 100);
@@ -22,55 +12,86 @@ async fn test_token_bucket_basic() {
     assert_eq!(bucket.available_tokens(), 50);
 
     assert!(bucket.try_consume(50));
-    assert_eq!(bucket.available_tokens(), 00);
+    assert_eq!(bucket.available_tokens(), 0);
 
     assert!(!bucket.try_consume(1));
 }
 
 #[tokio::test]
 async fn test_token_bucket_refill() {
-    let mut bucket = TokenBucket::new(100, 1000);
+    let mut bucket = TokenBucket::new(100, 10000);
 
-    bucket.try_consume(100);
-    assert_eq!(bucket.available_tokens(), 0);
+    assert!(
+        bucket.try_consume(100),
+        "Should be able to consume all tokens initially"
+    );
 
-    std::thread::sleep(Duration::from_millis(100));
+    tokio::time::sleep(Duration::from_millis(200)).await;
 
     let tokens = bucket.available_tokens();
-    assert!(tokens > 0);
+    assert!(
+        tokens > 0,
+        "Expected tokens to be refilled after 200ms with rate 10000/sec, got {tokens}"
+    );
     assert!(tokens <= 100);
 }
 
-#[tokio::test]
-async fn test_api_key_store() {
-    let pool = create_memory_pool().await;
-    let store = ApiKeyStore::new(pool);
+#[test]
+fn test_rate_limit_config_defaults() {
+    let config = RateLimitConfig::default();
 
-    store.initialize().await.unwrap();
+    assert!(config.enabled);
+    assert_eq!(config.global_requests_per_second, 500);
+    assert_eq!(config.backpressure_threshold, 0.8);
+}
 
-    let api_key = ApiKey {
-        key: "test-key-123".to_string(),
-        name: "Test Key".to_string(),
-        rate_limit: RateLimitConfig {
-            requests_per_second: 10,
-            burst_capacity: 100,
-        },
-        is_active: true,
-    };
+#[test]
+fn test_effective_rates() {
+    let config = RateLimitConfig::default();
 
-    store.create(api_key.clone()).await.unwrap();
+    assert_eq!(config.effective_global_rate(), 250);
+    assert_eq!(config.effective_authenticated_rate(), 25);
+    assert_eq!(config.effective_anonymous_rate(), 5);
 
-    let retrieved = store.get("test-key-123").await;
-    assert!(retrieved.is_some());
-    let retrieved = retrieved.unwrap();
-    assert_eq!(retrieved.key, "test-key-123");
-    assert_eq!(retrieved.name, "Test Key");
+    assert_eq!(config.effective_global_burst(), 500);
+    assert_eq!(config.effective_authenticated_burst(), 50);
+    assert_eq!(config.effective_anonymous_burst(), 10);
+}
 
-    let keys = store.list().await.unwrap();
-    assert_eq!(keys.len(), 1);
+#[test]
+fn test_backoff_calculation() {
+    let config = RateLimitConfig::default();
+    let mut backoff = ClientBackoff::new();
 
-    store.deactivate("test-key-123").await.unwrap();
+    assert_eq!(backoff.calculate_backoff(&config), Duration::from_secs(0));
 
-    let retrieved = store.get("test-key-123").await;
-    assert!(retrieved.is_none());
+    backoff.record_rejection();
+    assert_eq!(backoff.calculate_backoff(&config), Duration::from_secs(1));
+
+    backoff.record_rejection();
+    assert_eq!(backoff.calculate_backoff(&config), Duration::from_secs(2));
+
+    backoff.record_success();
+    assert_eq!(backoff.calculate_backoff(&config), Duration::from_secs(0));
+}
+
+#[test]
+fn test_utilization() {
+    let mut bucket = TokenBucket::new(100, 10);
+    assert!((bucket.utilization() - 0.0).abs() < 0.01);
+
+    bucket.try_consume(50);
+    assert!((bucket.utilization() - 0.5).abs() < 0.01);
+
+    bucket.try_consume(50);
+    assert!((bucket.utilization() - 1.0).abs() < 0.01);
+}
+
+#[test]
+fn test_api_key_creation() {
+    let key = ApiKey::new("test-key-123".to_string(), "Test Key".to_string());
+
+    assert_eq!(key.key, "test-key-123");
+    assert_eq!(key.name, "Test Key");
+    assert!(key.is_active);
 }

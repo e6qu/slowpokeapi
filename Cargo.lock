@@ -2442,6 +2442,7 @@ dependencies = [
  "moka",
  "once_cell",
  "prometheus",
+ "rand 0.8.5",
  "reqwest",
  "serde",
  "serde_json",

@@ -1,7 +1,7 @@
 use axum::routing::get;
 use axum::Router;
 
-use crate::handlers::{currencies, enriched, health, history, latest, metrics, pair, quota};
+use crate::handlers::{currencies, enriched, get_quota, health, history, latest, metrics, pair};
 use crate::metrics::PROMETHEUS_LAYER;
 use crate::server::openapi::swagger_ui;
 use crate::server::AppState;
@@ -24,7 +24,7 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/history/:base_code/:year/:month/:day",
             get(history::get_history),
         )
-        .route("/v1/quota", get(quota::get_quota))
+        .route("/v1/quota", get(get_quota))
         .route("/metrics", get(metrics::metrics))
         .merge(swagger_ui())
         .layer(PROMETHEUS_LAYER.clone())

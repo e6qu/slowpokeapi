@@ -3,6 +3,7 @@
 use serde::Deserialize;
 
 use crate::auth::AuthConfig;
+use crate::ratelimit::RateLimitConfig;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
@@ -14,6 +15,8 @@ pub struct Settings {
     pub sync: SyncConfig,
     #[serde(default)]
     pub auth: AuthConfig,
+    #[serde(default)]
+    pub rate_limit: RateLimitConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
