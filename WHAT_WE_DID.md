@@ -1,10 +1,72 @@
 # What We Did
 
-## 2026-03-03: Phase 6 Complete - Cache Layer ✅
+## 2026-03-03: Phase 7 Complete - Upstream API Clients ✅
 
-### PR #9: Cache Layer
+### PR #10: Upstream API Clients
 
 **Merged:** (pending)
+
+#### Completed Tasks
+
+1. **HTTP Client Infrastructure**
+   - Created `src/upstream/client.rs` with shared reqwest client
+   - Configurable timeout (10s default)
+   - Connection pooling (10 idle per host, max 60s idle timeout)
+   - User-Agent: SlowPokeAPI/0.1.0
+
+2. **Upstream Trait**
+   - Created `src/upstream/mod.rs` with `Upstream` trait
+   - Async methods: `get_latest_rates`, `get_historical_rates`
+   - Synchronous methods: `name`, `is_healthy`
+
+3. **Frankfurter Client**
+   - Created `src/upstream/frankfurter.rs`
+   - Base URL: https://api.frankfurter.app
+   - Implements latest rates endpoint
+   - Implements historical rates endpoint
+   - Currency conversion support
+   - Health tracking with AtomicBool
+
+4. **FawazAhmed0 Client**
+   - Created `src/upstream/fawaz.rs`
+   - Base URL: https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1
+   - Supports 150+ currencies including crypto
+   - Latest and historical rates endpoints
+   - JSON parsing
+
+5. **Upstream Manager**
+   - Created `src/upstream/manager.rs`
+   - Fallback chain: Frankfurter → FawazAhmed0
+   - Circuit breaker per upstream
+   - Health tracking
+
+6. **Circuit Breaker**
+   - Created `src/upstream/circuit_breaker.rs`
+   - Three states: Closed, Open, HalfOpen
+   - Configurable failure threshold (5 default)
+   - Configurable reset timeout (60s default)
+   - Automatic state transitions
+
+7. **Upstream Metrics**
+   - Created `src/upstream/metrics.rs`
+   - `slowpokeapi_upstream_requests_total`
+   - `slowpokeapi_upstream_errors_total`
+   - `slowpokeapi_upstream_latency_seconds`
+   - Per-upstream labels in Prometheus
+
+8. **Tests**
+   - Created `tests/upstream.rs` with 3 tests
+   - Tests for Frankfurter client (success and error cases)
+   - Tests for upstream manager fallback
+
+9. **Error Handling**
+   - Mapped HTTP errors to domain errors
+   - NotFound for missing currencies
+   - Internal for API failures
+
+---
+
+## 2026-03-03: Phase 6 Complete - Cache Layer ✅
 
 #### Completed Tasks
 
