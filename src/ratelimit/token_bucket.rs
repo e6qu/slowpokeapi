@@ -73,16 +73,15 @@ mod tests {
 
     #[test]
     fn test_token_refill() {
-        let mut bucket = TokenBucket::new(100, 1000);
+        let mut bucket = TokenBucket::new(100, 100);
         bucket.try_consume(100);
         assert_eq!(bucket.available_tokens(), 0);
-        std::thread::sleep(Duration::from_millis(150));
+        std::thread::sleep(Duration::from_millis(250));
         let tokens = bucket.available_tokens();
         assert!(
-            tokens > 0,
-            "Expected tokens to be refilled, but got {tokens}"
+            tokens >= 20 && tokens <= 35,
+            "Expected 20-35 tokens after 250ms at 100/s refill rate, got {tokens}"
         );
-        assert!(tokens <= 100);
     }
 
     #[test]
