@@ -22,7 +22,7 @@ fn test_is_metal_code() {
 
 #[test]
 fn test_crypto_currency_helpers() {
-    use slowpokeapi::models::{get_crypto_currency, CurrencyType};
+    use slowpokeapi::models::get_crypto_currency;
 
     let btc = get_crypto_currency("BTC").expect("BTC should exist");
     assert_eq!(btc.code, "BTC");
@@ -39,7 +39,7 @@ fn test_crypto_currency_helpers() {
 
 #[test]
 fn test_metal_currency_helpers() {
-    use slowpokeapi::models::{get_metal_currency, CurrencyType};
+    use slowpokeapi::models::get_metal_currency;
 
     let xau = get_metal_currency("XAU").expect("XAU should exist");
     assert_eq!(xau.code, "XAU");
