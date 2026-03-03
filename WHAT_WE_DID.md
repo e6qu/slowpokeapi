@@ -1,5 +1,44 @@
 # What We Did
 
+## 2026-03-03: Phase 15 Complete - Sync Integration ✅
+
+### PR #15: Sync Integration
+
+**Merged:** TBD
+
+#### Completed Tasks
+
+1. **Sync Integration Module**
+   - Created `src/sync/integration.rs` with `SyncIntegration` struct
+   - `on_cache_update()` - hooks cache updates to CRDT document
+   - `on_sync_update()` - hooks CRDT updates back to cache
+   - State serialization/deserialization via `get_state()` and `apply_state()`
+
+2. **Reconciliation Module**
+   - Created `src/sync/reconciliation.rs` with `Reconciler` struct
+   - `reconcile()` - ensures consistency between cache and CRDT
+   - `reconcile_all()` - batch reconciliation for multiple currencies
+   - Last-write-wins conflict resolution based on timestamps
+
+3. **Sync Configuration**
+   - Added `SyncConfig` to `src/config/settings.rs`
+   - Configuration options: enabled, peer_id, sync_interval_ms, peer_timeout_ms
+   - Default values with UUID-based peer_id
+
+4. **Health Check Integration**
+   - Updated `src/handlers/health.rs` to include sync status
+   - Health check shows if sync is enabled and peer_id
+   - Integrated into `/health` endpoint
+
+5. **Comprehensive Tests**
+   - Created 7 tests in `tests/sync_integration.rs`
+   - Test CRDT document operations
+   - Test sync integration with cache
+   - Test reconciliation logic
+   - Test state roundtrip serialization
+
+---
+
 ## 2026-03-03: Phase 11 Complete - Historical Rates Endpoint ✅
 
 ### PR #14: Historical Rates Endpoint

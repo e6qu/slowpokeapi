@@ -1,41 +1,35 @@
 # Do Next
-## Phase 14: CRDT Sync Engine
+## Phase 16: Rate Limiting & Quota
 ### Goal
 
-Implement automerge-based CRDT sync between replicas.
+Implement per-API-key rate limiting and quota tracking.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 14.1 | Add automerge dependency | `Cargo.toml` | Pending |
-| 14.2 | Create sync module | `src/sync/mod.rs` | Pending |
-| 14.3 | Define SyncEngine trait | `src/sync/mod.rs` | Pending |
-| 14.4 | Implement CRDT document wrapper | `src/sync/crdt.rs` | Pending |
-| 14.5 | Implement gossip protocol | `src/sync/gossip.rs` | Pending |
-| 14.6 | Implement peer discovery | `src/sync/peer.rs` | Pending |
-| 14.7 | Implement WebSocket transport | `src/sync/transport.rs` | Pending |
-| 14.8 | Integrate with storage layer | `src/sync/storage.rs` | Pending |
-| 14.9 | Add sync metrics | `src/sync/metrics.rs` | Pending |
-| 14.10 | Test sync between replicas | `tests/sync.rs` | Pending |
+| 16.1 | Create rate limit module | `src/ratelimit/mod.rs` | Pending |
+| 16.2 | Implement token bucket | `src/ratelimit/token_bucket.rs` | Pending |
+| 16.3 | Implement API key store | `src/storage/api_keys.rs` | Pending |
+| 16.4 | Create rate limit middleware | `src/server/middleware/ratelimit.rs` | Pending |
+| 16.5 | Implement `/v1/quota` endpoint | `src/handlers/quota.rs` | Pending |
+| 16.6 | Add rate limit headers | `src/server/middleware/ratelimit.rs` | Pending |
+| 16.7 | Add OpenAPI annotations | `src/handlers/quota.rs` | Pending |
+| 16.8 | Test rate limiting | `tests/ratelimit.rs` | Pending |
 
 ### Deliverables
 
-- CRDT-based state management
-- Gossip protocol for peer sync
-- WebSocket transport
-- Tests for sync functionality
+- Rate limiting middleware
+- `GET /v1/quota` endpoint
+- Rate limit headers in responses
 
 ### Acceptance Criteria
-- [ ] Automerge dependency added
-- [ ] Sync module created
-- [ ] SyncEngine trait defined
-- [ ] CRDT document wrapper implemented
-- [ ] Gossip protocol implemented
-- [ ] Peer discovery implemented
-- [ ] WebSocket transport implemented
-- [ ] Storage integration complete
-- [ ] Sync metrics added
+- [ ] Token bucket algorithm implemented
+- [ ] API key storage in SQLite
+- [ ] Rate limit middleware created
+- [ ] Quota endpoint returns usage info
+- [ ] Rate limit headers included
+- [ ] OpenAPI documentation updated
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
@@ -49,10 +43,10 @@ cargo fmt --check
 ```
 
 ### After completion
-1. Update PLAN.md - Mark Phase 14 complete
-2. Update STATUS.md - Move to Phase 15
-3. Update WHAT_WE_DID.md - document Phase 14
-4. Update DO_NEXT.md - set up Phase 15 tasks
-5. Create feature branch for Phase 15
+1. Update PLAN.md - Mark Phase 16 complete
+2. Update STATUS.md - Move to Phase 17
+3. Update WHAT_WE_DID.md - document Phase 16
+4. Update DO_NEXT.md - set up Phase 17 tasks
+5. Create feature branch for Phase 17
 6. Create PR
 7. Ensure CI passes

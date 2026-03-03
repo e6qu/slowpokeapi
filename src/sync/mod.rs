@@ -1,12 +1,16 @@
 pub mod crdt;
+pub mod integration;
 pub mod metrics;
 pub mod peer;
+pub mod reconciliation;
 
 use thiserror::Error;
 
 pub use crdt::CrdtDocument;
+pub use integration::SyncIntegration;
 pub use metrics::SYNC_METRICS;
 pub use peer::PeerManager;
+pub use reconciliation::Reconciler;
 
 pub type SyncResult<T> = Result<T, SyncError>;
 

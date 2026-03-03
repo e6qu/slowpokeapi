@@ -34,8 +34,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 11 | Historical Rates Endpoint | ✅ Complete |
 | 12 | Enriched Endpoint | ✅ Complete |
 | 13 | Cryptocurrency Support | Pending |
-| 14 | CRDT Sync Engine | 🔄 In Progress |
-| 15 | Sync Integration | Pending |
+| 14 | CRDT Sync Engine | ✅ Complete |
+| 15 | Sync Integration | ✅ Complete |
 | 16 | Rate Limiting & Quota | Pending |
 | 17 | Authentication | Pending |
 | 18 | Docker & Container | Pending |
@@ -46,6 +46,6 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 ## Current Phase
 
-**Phase 14: CRDT Sync Engine** (In Progress)
+**Phase 16: Rate Limiting & Quota** (Ready to start)
 
 See `DO_NEXT.md` for tasks.
