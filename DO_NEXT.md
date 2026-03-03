@@ -1,103 +1,107 @@
 # Do Next
-
-## Phase 8: Currencies Endpoint
-
+## Phase 9: Latest Rates Endpoint
 ### Goal
 
-Implement `/v1/currencies` and `/v1/currencies.min` endpoints to list supported currencies.
+Implement `/v1/latest` endpoint to fetch current exchange rates.
 
 ### Tasks
 
-| # | Task | Files | Status |
+| #  | Task | Files | Status |
 |---|------|-------|--------|
-| 8.1 | Create currencies handler | `src/handlers/currencies.rs` | Pending |
-| 8.2 | Implement list currencies | `src/handlers/currencies.rs` | Pending |
-| 8.3 | Implement minimal currencies | `src/handlers/currencies.rs` | Pending |
-| 8.4 | Add OpenAPI annotations | `src/handlers/currencies.rs` | Pending |
-| 8.5 | Add routes to router | `src/server/router.rs` | Pending |
-| 8.6 | Seed currency data on startup | `src/bootstrap.rs` | Pending |
-| 8.7 | Test endpoints | `tests/currencies.rs` | Pending |
+| 9.1 | Create latest handler | `src/handlers/latest.rs` | Pending |
+| 9.2 | Implement rate fetching logic | `src/services/rates.rs` | Pending |
+| 9.3 | Add cache integration | `src/services/rates.rs` | Pending |
+| 9.4 | Add upstream fallback | `src/services/rates.rs` | Pending |
+| 9.5 | Implement response formatting | `src/handlers/latest.rs` | Pending |
+| 9.6 | Add input validation | `src/handlers/latest.rs` | Pending |
+| 9.7 | Add openapi annotations | `src/handlers/latest.rs` | Pending |
+| 9.8 | Add route to router | `src/server/router.rs` | Pending |
+| 9.9 | Test endpoint | `tests/latest.rs` | Pending |
 
 ### Task Details
 
-#### 8.1 - Create Currencies Handler
-Create `src/handlers/currencies.rs`:
-- Handler for full currencies list
-- Handler for minimal currencies list
+#### 9.1 - Create latest handler
+Create `src/handlers/latest.rs`:
+- Handler for latest rates endpoint
+- Use upstream manager to fetch rates
+- Return `LatestRatesResponse`
 
-#### 8.2 - Implement List Currencies
-- Return all supported currencies with metadata
-- Include currency code, name, symbol
-- Return as `CurrenciesResponse` model (flattened HashMap)
+#### 9.2 - implement rate fetching logic
+Create `src/services/rates.rs`:
+- Service to fetch latest rates
+- Check cache first
+- Try upstream APIs on miss
+- Update cache on success
 
-#### 8.3 - Implement Minimal Currencies
-- Return only currency codes (no metadata)
-- Use same `CurrenciesResponse` type
-- Flat structure with codes as keys
+#### 9.3 - add cache integration
+- Inject cache into rates service
+- Use TieredCache for storage
 
-#### 8.4 - Add OpenAPI Annotations
+#### 9.4 - add upstream fallback
+- Use upstream manager to try primary then fallback
+- Return error if all fail
+
+#### 9.5 - implement response formatting
+- Format as `LatestRatesResponse`
+- Include base currency, date, rates
+- Include source information
+
+#### 9.6 - add input validation
+- Validate base currency (3-letter ISO code)
+- Validate target currencies (comma-separated or list)
+- Return 400 for invalid currencies
+
+#### 9.7 - add openapi annotations
 - Add `#[utoipa::path]` annotations
 - Document response schemas
 - Add tags for grouping
 
-#### 8.5 - Add Routes to Router
+#### 9.8 - add route to router
 Update `src/server/router.rs`:
-- Mount `GET /v1/currencies`
-- Mount `GET /v1/currencies.min`
+- Mount `GET /v1/latest`
 
-#### 8.6 - Seed Currency Data
-Create `src/bootstrap.rs`:
-- Define list of supported fiat currencies
-- Currency metadata (code, name, symbol)
-- Load on startup
-- At least 10 currencies: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, SEK, NZD
-
-#### 8.7 - Test Endpoints
-Create `tests/currencies.rs`:
-- Test full currencies endpoint
-- Test minimal currencies endpoint
+#### 9.9 - test endpoint
+Create `tests/latest.rs`:
+- Test latest rates endpoint
 - Test response format
-- Test at least 10 currencies returned
+- Test caching behavior
+- Test upstream fallback
 
 ### Deliverables
 
-- `GET /v1/currencies` - Full currency list with names and symbols
-- `GET /v1/currencies.min` - Currency codes only
+- `GET /v1/latest` - Current exchange rates
+- Response formatted as RapidAPI-compatible JSON
 
 ### Acceptance Criteria
-
-- [ ] Currencies handler created
-- [ ] Full list returns all currencies with metadata
-- [ ] Minimal list returns just codes
+- [ ] Latest handler created
+- [ ] Rate fetching logic implemented
+- [ ] Cache integration working
+- [ ] Upstream fallback working
+- [ ] Response formatting correct
+- [ ] Input validation working
 - [ ] OpenAPI annotations added
 - [ ] Routes mounted
-- [ ] Currency data seeded
 - [ ] Tests pass
 - [ ] Clippy passes with no warnings
 - [ ] Format check passes
 - [ ] CI passes
-- [ ] At least 10 currencies available
-- [ ] Each currency has name
 
-### Verification Commands
-
+### Verification commands
 ```bash
 cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
-# Run and test endpoints
+# Run and test endpoint
 cargo run &
-curl http://localhost:8080/v1/currencies
-curl http://localhost:8080/v1/currencies.min
+curl http://localhost:8080/v1/latest?base=USD
 ```
 
-### After Completion
-
-1. Update PLAN.md - Mark Phase 8 complete
-2. Update STATUS.md - Move to Phase 9
-3. Update WHAT_WE_DID.md - Document Phase 8
-4. Update DO_NEXT.md - Set up Phase 9 tasks
-5. Create feature branch for Phase 9
+### after completion
+1. Update PLAN.md - Mark Phase 9 complete
+2. Update STATUS.md - Move to Phase 10
+3. Update what_we_did.md - document Phase 9
+4. Update do_next.md - set up Phase 10 tasks
+5. Create feature branch for Phase 10
 6. Create PR
-7. Ensure CI passes
+7. ensure ci passes
