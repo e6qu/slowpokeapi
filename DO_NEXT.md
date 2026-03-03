@@ -1,77 +1,71 @@
 # Do Next
-## Phase 11: Historical Rates Endpoint
+## Phase 12: Enriched Endpoint
 ### Goal
 
-Implement `/v1/history/{base}/{year}/{month}/{day}` endpoint.
+Implement `/v1/enriched/{base}/{target}` endpoint with currency metadata.
 
 ### Tasks
 
 | #  | Task | Files | Status |
 |---|------|-------|--------|
-| 11.1 | Create history handler | `src/handlers/history.rs` | Pending |
-| 11.2 | Implement historical fetch from upstream | `src/upstream/*.rs` | Pending |
-| 11.3 | Add SQLite caching for historical data | `src/cache/sqlite.rs` | Pending |
-| 11.4 | Implement response formatting | `src/handlers/history.rs` | Pending |
-| 11.5 | Add date validation | `src/handlers/history.rs` | Pending |
-| 11.6 | Add OpenAPI annotations | `src/handlers/history.rs` | Pending |
-| 11.7 | Add route to router | `src/server/router.rs` | Pending |
-| 11.8 | Test endpoint | `tests/history.rs` | Pending |
+| 12.1 | Create enriched handler | `src/handlers/enriched.rs` | Pending |
+| 12.2 | Create currency metadata database | `src/storage/metadata.rs` | Pending |
+| 12.3 | Seed metadata on startup | `src/bootstrap.rs` | Pending |
+| 12.4 | Implement enriched response | `src/handlers/enriched.rs` | Pending |
+| 12.5 | Add OpenAPI annotations | `src/handlers/enriched.rs` | Pending |
+| 12.6 | Add route to router | `src/server/router.rs` | Pending |
+| 12.7 | Test endpoint | `tests/enriched.rs` | Pending |
 
 ### Task Details
 
-#### 11.1 - Create history handler
-Create `src/handlers/history.rs`:
-- Handler for historical rates endpoint
-- Path parameters: base, year, month, day
-- Return `HistoricalResponse`
+#### 12.1 - Create enriched handler
+Create `src/handlers/enriched.rs`:
+- Handler for enriched endpoint
+- Path parameters for base and target currencies
+- Fetch rate and metadata
+- Return `EnrichedResponse`
 
-#### 11.2 - Implement historical fetch
-- Use upstream manager's `get_historical_rates` method
-- Check cache first
-- Fallback chain on miss
+#### 12.2 - Create currency metadata database
+- Define metadata structure
+- Static metadata for common currencies
+- Include: name, symbol, locale, country code, flag URL
 
-#### 11.3 - Add caching
-- Cache key: `history:{base}:{year}:{month}:{day}`
-- Longer TTL for historical data (doesn't change)
+#### 12.3 - Seed metadata on startup
+- Initialize metadata on app startup
+- Store in memory for fast access
+- Consider SQLite for persistence (optional)
 
-#### 11.4 - Response formatting
-- Format as `HistoricalResponse`
-- Include base_code, year, month, day
-- Include conversion_rates
+#### 12.4 - Implement enriched response
+- Combine rate data with metadata
+- Format as `EnrichedResponse`
+- Include target currency details
 
-#### 11.5 - Date validation
-- Validate year (reasonable range, e.g., 1999+)
-- Validate month (1-12)
-- Validate day (1-31, consider month)
-- Return 400 for invalid dates
-
-#### 11.6 - Add OpenAPI annotations
+#### 12.5 - Add OpenAPI annotations
 - Add `#[utoipa::path]` annotations
 - Document response schemas
 - Add tags for grouping
 
-#### 11.7 - Add route to router
+#### 12.6 - Add route to router
 Update `src/server/router.rs`:
-- Mount `GET /v1/history/:base_code/:year/:month/:day`
+- Mount `GET /v1/enriched/:base_code/:target_code`
 
-#### 11.8 - Test endpoint
-Create `tests/history.rs`:
-- Test valid historical date
-- Test invalid date formats
-- Test future date rejection
+#### 12.7 - Test endpoint
+Create `tests/enriched.rs`:
+- Test enriched response structure
+- Test metadata inclusion
+- Test invalid currency codes
 
 ### Deliverables
 
-- `GET /v1/history/{base}/{year}/{month}/{day}` - Historical rates
+- `GET /v1/enriched/{base}/{target}` - Rate with target currency metadata
 - Response formatted as RapidAPI-compatible JSON
-- Caching of historical data
+- Metadata includes: name, symbol, locale, etc.
 
 ### Acceptance Criteria
-- [ ] History handler created
-- [ ] Historical fetch working
-- [ ] Caching working
+- [ ] Enriched handler created
+- [ ] Metadata database created
+- [ ] Metadata seeding implemented
 - [ ] Response formatting correct
-- [ ] Date validation working
 - [ ] OpenAPI annotations added
 - [ ] Route mounted
 - [ ] Tests pass
@@ -87,14 +81,14 @@ cargo fmt --check
 
 # Run and test endpoint
 cargo run &
-curl http://localhost:8080/v1/history/USD/2024/01/15
+curl http://localhost:8080/v1/enriched/USD/EUR
 ```
 
 ### After completion
-1. Update PLAN.md - Mark Phase 11 complete
-2. Update STATUS.md - Move to Phase 12
-3. Update WHAT_WE_DID.md - document Phase 11
-4. Update DO_NEXT.md - set up Phase 12 tasks
-5. Create feature branch for Phase 12
+1. Update PLAN.md - Mark Phase 12 complete
+2. Update STATUS.md - Move to Phase 13
+3. Update WHAT_WE_DID.md - document Phase 12
+4. Update DO_NEXT.md - set up Phase 13 tasks
+5. Create feature branch for Phase 13
 6. Create PR
 7. Ensure CI passes

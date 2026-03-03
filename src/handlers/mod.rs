@@ -1,4 +1,5 @@
 pub mod currencies;
+pub mod enriched;
 pub mod health;
 pub mod history;
 pub mod latest;
