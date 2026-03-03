@@ -2,6 +2,8 @@
 
 use serde::Deserialize;
 
+use crate::auth::AuthConfig;
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     pub server: ServerConfig,
@@ -10,6 +12,8 @@ pub struct Settings {
     pub cache: CacheConfig,
     #[serde(default)]
     pub sync: SyncConfig,
+    #[serde(default)]
+    pub auth: AuthConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]

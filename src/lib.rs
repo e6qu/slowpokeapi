@@ -1,5 +1,6 @@
 //! SlowPokeAPI - Currency exchange rate API with distributed sync
 
+pub mod auth;
 pub mod cache;
 pub mod config;
 pub mod handlers;
