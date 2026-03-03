@@ -40,12 +40,12 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 17 | Authentication | ✅ Complete |
 | 18 | Docker & Container | ✅ Complete |
 | 19 | Helm Chart | ✅ Complete |
-| 20 | Terraform ECS | 🔄 In Progress |
-| 21 | CI/CD Pipeline | Pending |
-| 22 | Documentation & Final Polish | Pending |
+| 20 | Terraform ECS | ✅ Complete |
+| 21 | CI/CD Pipeline | ✅ Complete |
+| 22 | Documentation & Final Polish | 🔄 In Progress |
 
 ## Current Phase
 
-**Phase 20: Terraform ECS** (In Progress)
+**Phase 22: Documentation & Final Polish** (In Progress)
 
 See `DO_NEXT.md` for tasks.
