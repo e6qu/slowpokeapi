@@ -1,5 +1,62 @@
 # What We Did
 
+## 2026-03-03: Phase 6 Complete - Cache Layer ✅
+
+### PR #9: Cache Layer
+
+**Merged:** (pending)
+
+#### Completed Tasks
+
+1. **Cache Module**
+   - Created `src/cache/mod.rs` with `Cache` trait
+   - Async trait with get, set, delete, clear operations
+   - Created `RateCache` type alias for rates
+
+2. **Memory Cache**
+   - Created `src/cache/memory.rs` using moka
+   - TTL support via moka's time_to_live
+   - Size-based eviction with max_capacity
+
+3. **SQLite Cache**
+   - Created `src/cache/sqlite.rs` for persistent caching
+   - Added `migrations/20240303000000_cache.sql` for cache_entries table
+   - TTL via expires_at timestamp column
+   - JSON serialization for values
+
+4. **Tiered Cache**
+   - Created `src/cache/tiered.rs` for two-tier caching
+   - L1: Memory cache (fast, limited)
+   - L2: SQLite cache (persistent)
+   - Automatic promotion from L2 to L1 on read
+
+5. **Cache Metrics**
+   - Created `src/cache/metrics.rs`
+   - `slowpokeapi_cache_hits_total`
+   - `slowpokeapi_cache_misses_total`
+   - `slowpokeapi_cache_sets_total`
+   - `slowpokeapi_cache_deletes_total`
+   - `slowpokeapi_cache_evictions_total`
+   - `slowpokeapi_cache_size`
+   - `slowpokeapi_cache_latency_seconds`
+
+6. **Configuration**
+   - Added `CacheConfig` to settings
+   - Configurable max_capacity and ttl_seconds
+   - Defaults: 10,000 entries, 1 hour TTL
+
+7. **AppState Integration**
+   - Added `rate_cache` to `AppState`
+   - Automatic cache creation when database is initialized
+
+8. **Tests**
+   - Created `tests/cache.rs` with 13 tests
+   - Memory cache tests (set/get, miss, delete, clear)
+   - SQLite cache tests (set/get, miss, delete, clear, TTL)
+   - Tiered cache tests (L1 hit, L2 promotion, delete, clear)
+
+---
+
 ## 2026-03-03: Phase 5 Complete - Data Models ✅
 
 ### PR #8: Data Models
