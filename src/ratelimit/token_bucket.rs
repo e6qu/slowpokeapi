@@ -72,10 +72,16 @@ mod tests {
     }
 
     #[test]
-    fn test_consume_tokens() {
-        let mut bucket = TokenBucket::new(100, 10);
-        assert!(bucket.try_consume(50));
-        assert_eq!(bucket.available_tokens(), 50);
+    fn test_token_refill() {
+        let mut bucket = TokenBucket::new(100, 100);
+        bucket.try_consume(100);
+        assert_eq!(bucket.available_tokens(), 0);
+        std::thread::sleep(Duration::from_millis(250));
+        let tokens = bucket.available_tokens();
+        assert!(
+            (20..=35).contains(&tokens),
+            "Expected 20-35 tokens after 250ms at 100/s refill rate, got {tokens}"
+        );
     }
 
     #[test]
@@ -83,13 +89,5 @@ mod tests {
         let mut bucket = TokenBucket::new(100, 10);
         assert!(bucket.try_consume(50));
         assert!(!bucket.try_consume(60));
-    }
-
-    #[test]
-    fn test_token_refill() {
-        let mut bucket = TokenBucket::new(100, 1000);
-        bucket.try_consume(100);
-        std::thread::sleep(Duration::from_millis(100));
-        assert!(bucket.available_tokens() > 0);
     }
 }
