@@ -124,6 +124,13 @@ pub async fn get_enriched(
     let base = base_code.to_uppercase();
     let target = target_code.to_uppercase();
 
+    if base == target {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Base and target currencies must be different".to_string(),
+        ));
+    }
+
     if base.len() != 3 || !base.chars().all(|c| c.is_ascii_uppercase()) {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -148,7 +155,10 @@ pub async fn get_enriched(
     if let Some(ref cache) = state.rate_cache {
         match cache.get(&cache_key).await {
             Ok(Some(rates)) => {
-                let rate = rates.rates.get(&target).copied().unwrap_or(0.0);
+                let rate = rates.rates.get(&target).copied().ok_or((
+                    StatusCode::NOT_FOUND,
+                    format!("Currency rate not found: {target}"),
+                ))?;
                 return Ok(Json(build_response(&base, rate, target_metadata)));
             }
             Ok(None) => {}
@@ -168,12 +178,16 @@ pub async fn get_enriched(
 
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
+            let rate = rates.rates.get(&target).copied().ok_or((
+                StatusCode::NOT_FOUND,
+                format!("Currency rate not found: {target}"),
+            ))?;
+
             if let Some(ref cache) = state.rate_cache {
                 if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
                     tracing::warn!("Cache set error: {}", e);
                 }
             }
-            let rate = rates.rates.get(&target).copied().unwrap_or(0.0);
             Ok(Json(build_response(&base, rate, target_metadata)))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
