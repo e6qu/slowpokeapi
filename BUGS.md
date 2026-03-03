@@ -25,10 +25,10 @@ Last Updated: 2026-03-04
 | Severity | Count | Status |
 |----------|-------|--------|
 | Critical | 4 | Fixed |
-| High | 13 | 12 Fixed |
-| Medium | 17 | 10 Fixed |
-| Low | 16 | 6 Fixed |
-| **Total** | **50** | **28 Fixed** |
+| High | 14 | 13 Fixed |
+| Medium | 25 | 11 Fixed |
+| Low | 23 | 6 Fixed |
+| **Total** | **66** | **30 Fixed** |
 
 ---
 
@@ -270,12 +270,51 @@ Last Updated: 2026-03-04
 
 ## Change Log
 
+### 2026-03-04 - Third Bug Review
+- Fixed Bug #47: Removed duplicate minimum date validation
+- Fixed Bug #48: Sync metrics now exported to default Prometheus registry
+- Fixed Bug #49: Cache metrics now integrated in MemoryCache implementation
+- Found 16 new bugs (1 high, 8 medium, 7 low)
+
 ### 2026-03-03 - Initial Bug Review
 - Fixed 4 critical division by zero bugs
 - Fixed 10 high priority panic/error handling issues
 - Fixed 8 medium priority logic and validation bugs
 - Fixed 4 low priority code quality issues
 - 6 low priority issues pending future work
+
+---
+
+## 47. MEDIUM: Duplicate Code ✅ FIXED
+
+### Bug #47: Duplicate minimum date validation in history handler
+- **File:** `src/handlers/history.rs:52-66`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** The minimum date validation (1999-01-04) was duplicated twice.
+- **Fix:** Removed duplicate code block.
+
+---
+
+## 48. HIGH: Metrics Not Exported ✅ FIXED
+
+### Bug #48: Sync metrics not exported to Prometheus
+- **File:** `src/sync/metrics.rs:15`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** Created separate Registry instead of using default Prometheus registry.
+- **Fix:** Changed to use `prometheus::default_registry()`.
+
+---
+
+## 49. HIGH: Cache Metrics Not Used ✅ FIXED
+
+### Bug #49: Cache metrics never incremented
+- **File:** `src/cache/metrics.rs`, `src/cache/memory.rs`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** CacheMetrics struct defined but never called in cache implementations.
+- **Fix:** Integrated cache metrics into MemoryCache get/set/delete/clear operations.
 
 ---
 
@@ -448,3 +487,146 @@ Last Updated: 2026-03-04
 ### Future (Low Priority)
 7. Bug #39: Complete OpenAPI spec
 8. Bug #41-46: Code quality improvements
+
+---
+
+## 50. MEDIUM: API Key Exposure (NEW)
+
+### Bug #50: API key exposed in quota response
+- **File:** `src/handlers/quota.rs:28`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** Quota endpoint returns the full API key in response, potentially exposing it in logs.
+- **Fix:** Return only key name or identifier, not the full key value.
+
+---
+
+## 51. LOW: No Server Validation (NEW)
+
+### Bug #51: No server host validation
+- **File:** `src/config/settings.rs:20`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** No validation for server.host - empty strings or invalid addresses not caught.
+- **Fix:** Add validation for host format.
+
+---
+
+## 52. LOW: No Port Range Validation (NEW)
+
+### Bug #52: No server port validation
+- **File:** `src/config/settings.rs:21`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Port through 0 or > 65535 would cause runtime errors.
+- **Fix:** Add port range validation (1-65535).
+
+---
+
+## 53. MEDIUM: Metal Currency Routing (NEW)
+
+### Bug #53: Upstream manager doesn't route metal currencies
+- **File:** `src/upstream/manager.rs:43-45`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** `is_crypto_currency()` only returns true for crypto, not metals. Requests for metal base currencies (XAU, XAG) route to fiat clients which don't support them.
+- **Fix:** Add `is_metal_currency()` check and route metals appropriately.
+
+---
+
+## 54. LOW: SQLite Pool Size (NEW)
+
+### Bug #54: SQLite connection pool size not configurable
+- **File:** `src/storage/sqlite.rs:15-16`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Pool hardcoded to max_connections(5). For high-concurrency, may be insufficient.
+- **Fix:** Make pool size configurable via DatabaseConfig.
+
+---
+
+## 55. LOW: Configuration Validation (NEW)
+
+### Bug #55: No configuration value validation
+- **File:** `src/config/settings.rs:10-24`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** No validation for port, host, cache capacity, etc. Invalid values cause runtime errors.
+- **Fix:** Add Validate trait implementation.
+
+---
+
+## 56. MEDIUM: Fawaz Rates Case Mismatch (NEW)
+
+### Bug #56: FawazClient returns latest rates for historical requests
+- **File:** `src/upstream/fawaz.rs:73-120`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** `get_historical_rates` returns error, but should fallback to latest rates with warning.
+- **Fix:** Either return latest rates with warning or improve error message.
+
+---
+
+## 57. MEDIUM: Circuit Breaker Concurrency (NEW)
+
+### Bug #57: Circuit breaker uses sync mutex across async boundaries
+- **File:** `src/upstream/circuit_breaker.rs:42-56`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** Multiple concurrent requests could all see state as HalfOpen during check-and-transition.
+- **Fix:** Use single atomic compare-and-swap for state transitions.
+
+---
+
+## 58. LOW: Default Values (NEW)
+
+### Bug #58: Default cache TTL may be too long
+- **File:** `src/cache/memory.rs:22-28`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Default TTL of 1 hour may cause stale data issues for frequently changing rates.
+- **Fix:** Consider shorter default TTL or make it configurable.
+
+---
+
+## 59. MEDIUM: Circuit Breaker Atomicity (NEW)
+
+### Bug #59: Circuit breaker state transition not atomic
+- **File:** `src/upstream/circuit_breaker.rs:42-56`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** Checking condition and setting state in separate operations creates race conditions.
+- **Fix:** Use compare-and-swap for atomic state transitions.
+
+---
+
+## 60. LOW: Negative Amount Validation (NEW)
+
+### Bug #60: Pair handler doesn't validate for negative amounts
+- **File:** `src/handlers/pair.rs:58-65`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Amount validation checks `amount <= 1.0` but doesn't handle `NaN` or `Infinity`.
+- **Fix:** Add validation for `amount.is_finite() && amount > 1.0`.
+
+---
+
+## 61. LOW: Enriched Metadata Coverage (NEW)
+
+### Bug #61: Enriched handler only supports 10 currencies
+- **File:** `src/handlers/enriched.rs:9-103`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `get_metadata()` only has hardcoded metadata for 10 currencies. All other valid fiat currencies return 404.
+- **Fix:** Add metadata for more currencies or provide fallback.
+
+---
+
+## 62. LOW: Sync Peer ID Determinism (NEW)
+
+### Bug #62: Sync config generates non-deterministic peer ID
+- **File:** `src/config/settings.rs:62-70`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `SyncConfig::default()` generates random UUID for `peer_id`. A restart creates a new peer identity.
+- **Fix:** Require explicit peer_id configuration or use hostname-based deterministic ID.
