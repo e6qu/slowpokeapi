@@ -1,10 +1,9 @@
-static CURRENCIES: & CurrenciesResponse {
-    let currencies: HashMap<String, String> = CURRENCIES
-        .iter()
-        .map(|(code, name)| ((*code).to_string(), (*name).to_string()))
-        .collect();
-    Ok(Json(CurrenciesResponse { currencies }))
-}
+use std::collections::HashMap;
+
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::Json;
+
 use crate::models::CurrenciesResponse;
 use crate::server::AppState;
 

@@ -1,46 +1,51 @@
 use reqwest::StatusCode;
-use serde_json::json;
-use slowpokeapi::handlers::currencies;
 use slowpokeapi::models::CurrenciesResponse;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::net::TcpListener;
-use tokio::runtime::Handle;
 
-use slowpokeapi::AppState;
+mod common;
 
-use slowpokeapi::config::Settings;
-
-use slowpokeapi::server::router::create_router;
-
-async fn test_currencies_endpoint() {
-    let listener = TcpListener::bind("127.0.0.1:0809").await.unwrap();
-    let addr = listener.local_addr();
-
-    let state = AppState::new(Settings::load().unwrap());
-    let router = create_router(state);
-
-    let server = axum::Server::bind(router).serve_connection(addr).await;
+#[tokio::test]
+async fn currencies_endpoint_returns_list() {
+    let addr = common::spawn_app().await;
 
     let client = reqwest::Client::new();
     let response = client
-        .get(format!("http://{addr}/v1/currencies"))
+        .get(format!("{addr}/v1/currencies"))
         .send()
         .await
-        .unwrap();
+        .expect("Failed to execute request");
 
-    assert!(response.status().is_success());
-    let body: CurrenciesResponse = response.json().unwrap();
+    assert_eq!(StatusCode::OK, response.status());
+
+    let body: CurrenciesResponse = response.json().await.expect("Failed to parse JSON");
+
     assert!(body.currencies.contains_key("USD"));
     assert!(body.currencies.contains_key("EUR"));
+    assert!(body.currencies.contains_key("GBP"));
     assert!(body.currencies.len() >= 10);
+}
 
-    let response_min = client
-        .get(format!("http://{addr}/v1/currencies.min"))
+#[tokio::test]
+async fn currencies_minimal_endpoint_returns_codes_only() {
+    let addr = common::spawn_app().await;
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get(format!("{addr}/v1/currencies.min"))
         .send()
         .await
-        .json()
-        .unwrap();
+        .expect("Failed to execute request");
 
-    assert_eq!(response_min.get::<str>().unwrap(), "");
+    assert_eq!(StatusCode::OK, response.status());
+
+    let body: CurrenciesResponse = response.json().await.expect("Failed to parse JSON");
+
+    assert!(body.currencies.contains_key("USD"));
+    assert!(body.currencies.contains_key("EUR"));
+
+    for name in body.currencies.values() {
+        assert!(
+            name.is_empty(),
+            "Minimal currencies should have empty names"
+        );
+    }
 }
