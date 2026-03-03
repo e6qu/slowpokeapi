@@ -1,6 +1,8 @@
+pub mod api_keys;
 pub mod repositories;
 pub mod sqlite;
 
+pub use api_keys::ApiKeyStore;
 pub use sqlite::SqlitePool;
 
 use async_trait::async_trait;

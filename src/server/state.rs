@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use crate::cache::RateCache;
-use crate::storage::SqlitePool;
+use crate::storage::{ApiKeyStore, SqlitePool};
 use crate::upstream::UpstreamManager;
 
 #[derive(Clone)]
@@ -12,6 +12,7 @@ pub struct AppState {
     pub db_pool: Option<SqlitePool>,
     pub rate_cache: Option<Arc<RateCache>>,
     pub upstream_manager: Option<Arc<UpstreamManager>>,
+    pub api_key_store: Option<Arc<ApiKeyStore>>,
 }
 
 impl AppState {
@@ -22,13 +23,15 @@ impl AppState {
             db_pool: None,
             rate_cache: None,
             upstream_manager: None,
+            api_key_store: None,
         }
     }
 
     pub fn with_db(mut self, pool: SqlitePool) -> Self {
         self.db_pool = Some(pool.clone());
-        let cache = crate::cache::create_rate_cache(&self.config.cache, pool);
+        let cache = crate::cache::create_rate_cache(&self.config.cache, pool.clone());
         self.rate_cache = Some(Arc::new(cache));
+        self.api_key_store = Some(Arc::new(ApiKeyStore::new(pool)));
         self
     }
 

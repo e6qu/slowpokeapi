@@ -5,6 +5,7 @@ pub mod config;
 pub mod handlers;
 pub mod metrics;
 pub mod models;
+pub mod ratelimit;
 pub mod server;
 pub mod storage;
 pub mod sync;
