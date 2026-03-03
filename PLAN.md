@@ -31,8 +31,8 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 | 8 | Currencies Endpoint | ✅ Complete |
 | 9 | Latest Rates Endpoint | ✅ Complete |
 | 10 | Pair Conversion Endpoint | ✅ Complete |
-| 11 | Historical Rates Endpoint | 🔄 In Progress |
-| 12 | Enriched Endpoint | Pending |
+| 11 | Historical Rates Endpoint | ✅ Complete |
+| 12 | Enriched Endpoint | 🔄 In Progress |
 | 13 | Cryptocurrency Support | Pending |
 | 14 | CRDT Sync Engine | Pending |
 | 15 | Sync Integration | Pending |
@@ -46,6 +46,6 @@ Implement in **22 phases**, each resulting in a pull request. Each phase must:
 
 ## Current Phase
 
-**Phase 11: Historical Rates Endpoint** (In Progress)
+**Phase 12: Enriched Endpoint** (In Progress)
 
 See `DO_NEXT.md` for tasks.
