@@ -2,7 +2,9 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 
-use crate::models::{HistoricalRate, HistoricalResponse, ResponseResult};
+use crate::models::{
+    is_crypto_code, is_metal_code, HistoricalRate, HistoricalResponse, ResponseResult,
+};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -30,10 +32,21 @@ pub async fn get_history(
 ) -> Result<Json<HistoricalResponse>, (StatusCode, String)> {
     let base = base_code.to_uppercase();
 
-    if base.len() != 3 || !base.chars().all(|c| c.is_ascii_uppercase()) {
+    let is_crypto = is_crypto_code(&base);
+    let is_metal = is_metal_code(&base);
+    let is_fiat = base.len() == 3 && base.chars().all(|c| c.is_ascii_uppercase());
+
+    if !is_fiat && !is_crypto && !is_metal {
         return Err((
             StatusCode::BAD_REQUEST,
-            format!("Invalid base currency code: {base}"),
+            "Invalid currency code. Must be a 3-letter fiat code (USD, EUR), crypto (BTC, ETH), or metal (XAU, XAG)".to_string(),
+        ));
+    }
+
+    if is_crypto || is_metal {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("Historical rates are only available for fiat currencies, not {base}"),
         ));
     }
 
