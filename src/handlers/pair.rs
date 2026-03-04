@@ -56,10 +56,10 @@ pub async fn get_pair(
     }
 
     if let Some(amount) = amount {
-        if amount <= 0.0 {
+        if !amount.is_finite() || amount <= 0.0 {
             return Err((
                 StatusCode::BAD_REQUEST,
-                "Amount must be positive".to_string(),
+                "Amount must be a finite positive number".to_string(),
             ));
         }
     }

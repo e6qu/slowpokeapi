@@ -150,7 +150,7 @@ pub async fn get_enriched(
         format!("Currency metadata not found for: {target}"),
     ))?;
 
-    let cache_key = format!("pair:{base}:{target}");
+    let cache_key = format!("enriched:{base}:{target}");
 
     if let Some(ref cache) = state.rate_cache {
         match cache.get(&cache_key).await {

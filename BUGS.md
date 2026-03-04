@@ -21,14 +21,30 @@ Last Updated: 2026-03-04
 | Low | 10 | Pending |
 | **Total** | **22** | **4 Fixed** |
 
+### Third Review (Phase 22 Part 2)
+| Severity | Count | Status |
+|----------|-------|--------|
+| High | 1 | Fixed |
+| Medium | 8 | 4 Fixed |
+| Low | 7 | 1 Fixed |
+| **Total** | **16** | **6 Fixed** |
+
+### Fourth Review (Phase 22 Part 3)
+| Severity | Count | Status |
+|----------|-------|--------|
+| High | 1 | 1 Fixed |
+| Medium | 4 | 4 Fixed |
+| Low | 4 | 2 Fixed |
+| **Total** | **9** | **7 Fixed** |
+
 ### Overall
 | Severity | Count | Status |
 |----------|-------|--------|
 | Critical | 4 | Fixed |
-| High | 14 | 13 Fixed |
-| Medium | 25 | 11 Fixed |
-| Low | 23 | 6 Fixed |
-| **Total** | **66** | **30 Fixed** |
+| High | 15 | 14 Fixed |
+| Medium | 29 | 19 Fixed |
+| Low | 25 | 9 Fixed |
+| **Total** | **72** | **39 Fixed** |
 
 ---
 
@@ -270,6 +286,16 @@ Last Updated: 2026-03-04
 
 ## Change Log
 
+### 2026-03-04 - Fourth Bug Review
+- Fixed Bug #50: API key masked in quota response
+- Fixed Bug #53: Metal currency routing with clear error message
+- Fixed Bug #60: Added NaN/Infinity validation for amount
+- Fixed Bug #64: Removed circuit breaker Clone implementation
+- Fixed Bug #65: Changed unwrap to expect for date construction
+- Fixed Bug #67: Added logging for Frankfurter date fallback
+- Fixed Bug #68: Changed enriched cache key prefix
+- Found 3 new bugs (#66, #71, #72)
+
 ### 2026-03-04 - Third Bug Review
 - Fixed Bug #47: Removed duplicate minimum date validation
 - Fixed Bug #48: Sync metrics now exported to default Prometheus registry
@@ -395,16 +421,16 @@ Last Updated: 2026-03-04
 ### Bug #37: Cache metrics never updated
 - **File:** `src/cache/metrics.rs`, `src/cache/memory.rs`, `src/cache/sqlite.rs`
 - **Severity:** Medium
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** CacheMetrics struct defined but never called in cache implementations.
-- **Fix:** Integrate cache metrics into get/set operations.
+- **Fix:** Integrated cache metrics into MemoryCache get/set operations (see Bug #49).
 
 ### Bug #38: Sync metrics registry not used
 - **File:** `src/sync/metrics.rs:15,41-52`
 - **Severity:** Low
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** Registry created but metrics not registered with default registry.
-- **Fix:** Register with `prometheus::default_registry()`.
+- **Fix:** Changed to use `prometheus::default_registry()` (see Bug #48).
 
 ---
 
@@ -474,19 +500,19 @@ Last Updated: 2026-03-04
 
 ## Priority Fix Order
 
-### Immediate (High Priority)
-1. Bug #29, #30: Return 404 for unknown currency instead of 0.0
-2. Bug #33: Document history endpoint limitation or update validation
-3. Bug #35: Add minimum date validation for historical rates
-
-### Near-term (Medium Priority)
-4. Bug #37: Integrate cache metrics
-5. Bug #34: Reject self-to-self rate queries
-6. Bug #31, #32: Fix overflow and precision issues
+### Immediate (Medium Priority - Pending)
+1. Bug #19: Race condition in CircuitBreaker
+2. Bug #31: Integer overflow in exponential backoff
+3. Bug #32: TTL truncation in SQLite cache
+4. Bug #33: History endpoint only supports fiat
+5. Bug #36: CRDT apply_state accepts empty state
+6. Bug #66: Missing error context when all upstreams fail
+7. Bug #56, #57, #59: Circuit breaker concurrency issues
 
 ### Future (Low Priority)
-7. Bug #39: Complete OpenAPI spec
-8. Bug #41-46: Code quality improvements
+8. Bug #39: Complete OpenAPI spec
+9. Bug #41-46: Code quality improvements
+10. Bug #51-55, #58, #61-62, #71-72: Various low priority issues
 
 ---
 
@@ -630,3 +656,113 @@ Last Updated: 2026-03-04
 - **Status:** Pending
 - **Description:** `SyncConfig::default()` generates random UUID for `peer_id`. A restart creates a new peer identity.
 - **Fix:** Require explicit peer_id configuration or use hostname-based deterministic ID.
+
+---
+
+## 63. MEDIUM: API Key Exposure ✅ FIXED
+
+### Bug #50: API key exposed in quota response
+- **File:** `src/handlers/quota.rs:44`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** Quota endpoint returns the full API key in response, potentially exposing it in logs.
+- **Fix:** Mask the API key, showing only last 4 characters.
+
+---
+
+## 64. MEDIUM: Metal Currency Routing ✅ FIXED
+
+### Bug #53: Upstream manager doesn't route metal currencies
+- **File:** `src/upstream/manager.rs:43-45`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** `is_crypto_currency()` only returns true for crypto, not metals. Requests for metal base currencies (XAU, XAG) route to fiat clients which don't support them.
+- **Fix:** Added `is_metal_currency()` check and proper routing with clear error message.
+
+---
+
+## 65. LOW: Amount Validation ✅ FIXED
+
+### Bug #60: Pair handler doesn't validate for NaN/Infinity
+- **File:** `src/handlers/pair.rs:59-64`
+- **Severity:** Low
+- **Status:** Fixed
+- **Description:** Amount validation checks `amount <= 0.0` but doesn't handle `NaN` or `Infinity`.
+- **Fix:** Added validation for `amount.is_finite()`.
+
+---
+
+## 66. MEDIUM: Cache Key Collision ✅ FIXED
+
+### Bug #68: Enriched endpoint uses pair cache prefix
+- **File:** `src/handlers/enriched.rs:153`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** Enriched endpoint uses `pair:` cache key prefix, causing potential confusion and collision with pair endpoint.
+- **Fix:** Changed to distinct `enriched:` cache key prefix.
+
+---
+
+## 67. HIGH: Circuit Breaker Clone Panic ✅ FIXED
+
+### Bug #64: Circuit breaker clone uses block_on
+- **File:** `src/upstream/circuit_breaker.rs:89-104`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** `Clone` implementation uses `tokio::runtime::Handle::block_on()` which can panic in certain async contexts.
+- **Fix:** Removed Clone implementation - circuit breakers are already wrapped in Arc and don't need cloning.
+
+---
+
+## 68. MEDIUM: Date Fallback Without Logging ✅ FIXED
+
+### Bug #67: Silent fallback for missing date in Frankfurter
+- **File:** `src/upstream/frankfurter.rs:73,80`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** When parsing the date from Frankfurter API response fails, it silently falls back to "2024-01-01" without logging.
+- **Fix:** Added warning log when date parsing fails.
+
+---
+
+## 69. LOW: Unwrap on Date Construction ✅ FIXED
+
+### Bug #65: Unwrap on date construction in history handler
+- **File:** `src/handlers/history.rs:52`
+- **Severity:** Low
+- **Status:** Fixed
+- **Description:** Uses `.unwrap()` on date construction with hardcoded values, which should never fail but violates no-panic principle.
+- **Fix:** Changed to use `expect()` with clear message and constant.
+
+---
+
+## 70. MEDIUM: Missing Error Context (NEW)
+
+### Bug #66: Missing error context when all upstreams fail
+- **File:** `src/upstream/manager.rs:74-75,106-107`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** When all upstreams fail, only the last error is preserved. Earlier errors (which might indicate different root causes) are discarded.
+- **Fix:** Collect all errors and log them before returning final error.
+
+---
+
+## 71. LOW: Different Error Response Formats (NEW)
+
+### Bug #71: Error responses are inconsistent
+- **File:** Multiple handlers
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** Error responses are inconsistent - some return `(StatusCode, String)`, others return JSON structures.
+- **Fix:** Standardize on a JSON error response format across all endpoints.
+
+---
+
+## 72. LOW: Rate Limit Headers on Errors (NEW)
+
+### Bug #72: Missing rate limit headers on error responses
+- **File:** `src/server/middleware/ratelimit.rs:82-93`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** When rate limit errors are returned, rate limit headers are not included, making it harder for clients to understand their quota status.
+- **Fix:** Include rate limit headers even in error responses.

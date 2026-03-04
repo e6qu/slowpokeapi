@@ -18,6 +18,7 @@ Complete documentation and final integration tests.
 | 22.8 | Add end-to-end tests | `tests/e2e.rs` | Pending |
 | 22.9 | Performance testing | `benches/` | Pending |
 | 22.10 | Security review | - | Pending |
+| 22.11 | Fix remaining medium priority bugs | Various | In Progress |
 
 ### Deliverables
 
@@ -34,6 +35,15 @@ Complete documentation and final integration tests.
 - [ ] Grafana dashboard created
 - [ ] Prometheus alerts created
 - [ ] E2E tests added
+
+### Remaining Medium Priority Bugs
+- Bug #19: Race condition in CircuitBreaker
+- Bug #31: Integer overflow in exponential backoff
+- Bug #32: TTL truncation in SQLite cache
+- Bug #33: History endpoint only supports fiat
+- Bug #36: CRDT apply_state accepts empty state
+- Bug #66: Missing error context when all upstreams fail
+- Bug #56, #57, #59: Circuit breaker concurrency issues
 
 ### Verification commands
 ```bash

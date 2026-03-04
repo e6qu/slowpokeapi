@@ -70,14 +70,20 @@ impl Upstream for FrankfurterClient {
         let date_str = json
             .get("date")
             .and_then(|d| d.as_str())
-            .unwrap_or("2024-01-01");
+            .unwrap_or_else(|| {
+                tracing::warn!("Frankfurter response missing date field, using fallback");
+                "2024-01-01"
+            });
 
         let timestamp = chrono::Utc.from_utc_datetime(
             &chrono::NaiveDateTime::parse_from_str(
                 &format!("{date_str} 00:00:00"),
                 "%Y-%m-%d %H:%M:%S",
             )
-            .unwrap_or_else(|_| chrono::Utc::now().naive_utc()),
+            .unwrap_or_else(|e| {
+                tracing::warn!("Failed to parse Frankfurter date '{}': {}", date_str, e);
+                chrono::Utc::now().naive_utc()
+            }),
         );
 
         Ok(RateCollection {
