@@ -36,14 +36,17 @@ impl CrdtDocument {
     }
 
     pub fn get_state(&self) -> Vec<u8> {
-        bincode::serialize(&(self.rates.clone(), self.base_code.clone(), self.timestamp))
-            .unwrap_or_else(|e| {
-                tracing::error!("CRDT serialization failed: {}", e);
-                Vec::new()
-            })
+        bincode::serialize(&(&self.rates, &self.base_code, self.timestamp)).unwrap_or_else(|e| {
+            tracing::error!("CRDT serialization failed: {}", e);
+            Vec::new()
+        })
     }
 
     pub fn apply_state(&mut self, state: &[u8]) -> SyncResult<()> {
+        if state.is_empty() {
+            return Err(SyncError::CrdtError("Cannot apply empty state".to_string()));
+        }
+
         let (rates, base_code, timestamp): (HashMap<String, f64>, String, i64) =
             bincode::deserialize(state)
                 .map_err(|e| SyncError::CrdtError(format!("Failed to deserialize: {e}")))?;
