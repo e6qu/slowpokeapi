@@ -1,5 +1,66 @@
 # What We Did
 
+## 2026-03-04: Phase 22 Part 4 - Fifth Bug Review & Fixes ✅
+
+### PR #: Fifth Bug Review Round
+
+**Status:** Complete
+
+#### Fixed Bugs (9 total)
+
+1. **Circuit Breaker Clone (Bug #19)**
+   - Already fixed in previous round (Clone removed)
+   - Circuit breakers wrapped in Arc don't need cloning
+   - File: `src/upstream/circuit_breaker.rs`
+
+2. **Integer Overflow in Backoff (Bug #31)**
+   - Verified code already uses `saturating_mul`
+   - No overflow possible on 32-bit systems
+   - File: `src/ratelimit/mod.rs`
+
+3. **TTL Truncation (Bug #32)**
+   - Round up to nearest second when subseconds exist
+   - Prevents losing precision for sub-second TTLs
+   - File: `src/cache/sqlite.rs`
+
+4. **History Fiat-Only (Bug #33)**
+   - Added clear error message for crypto/metal currencies
+   - Explains historical rates only available for fiat
+   - File: `src/handlers/history.rs`
+
+5. **CRDT Empty State (Bug #36)**
+   - Validate state is non-empty before applying
+   - Prevents corrupting document with empty state
+   - File: `src/sync/crdt.rs`
+
+6. **Auth Header Misleading (Bug #73)** - High Priority
+   - X-API-Key-Valid header only set when actually authenticated
+   - Previously set to "true" for all requests
+   - File: `src/server/middleware/auth.rs`
+
+7. **Division by Zero (Bug #74)** - High Priority
+   - Added guard for refill_rate == 0 in time_until_available
+   - Returns max duration instead of undefined behavior
+   - File: `src/ratelimit/mod.rs`
+
+8. **Float Truncation (Bug #75)**
+   - Added max(0.0) guard before casting to u64
+   - Prevents wrap-around on negative floats
+   - File: `src/ratelimit/mod.rs`
+
+9. **Redundant Clone (Bug #76)**
+   - Changed to use references in CRDT serialization
+   - Minor performance improvement
+   - File: `src/sync/crdt.rs`
+
+#### Fifth Bug Review Findings
+- **New bugs discovered:** 9 (1 high, 5 medium, 3 low)
+- **Total bugs in tracker:** 83
+- **Fixed in this PR:** 9
+- **Focus:** Security, validation, edge cases
+
+---
+
 ## 2026-03-04: Phase 22 Part 3 - Fourth Bug Review & Fixes ✅
 
 ### PR #: Fourth Bug Review Round

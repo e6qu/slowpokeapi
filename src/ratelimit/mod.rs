@@ -125,7 +125,7 @@ impl TokenBucket {
 
     pub fn available_tokens(&mut self) -> u64 {
         self.refill();
-        self.tokens as u64
+        self.tokens.max(0.0) as u64
     }
 
     pub fn capacity(&self) -> u64 {
@@ -142,6 +142,8 @@ impl TokenBucket {
         let tokens_needed = tokens as f64;
         if self.tokens >= tokens_needed {
             Duration::from_secs(0)
+        } else if self.refill_rate == 0.0 {
+            Duration::from_secs(u64::MAX)
         } else {
             let tokens_deficit = tokens_needed - self.tokens;
             let seconds = tokens_deficit / self.refill_rate;

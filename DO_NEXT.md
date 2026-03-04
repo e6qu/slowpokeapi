@@ -37,13 +37,9 @@ Complete documentation and final integration tests.
 - [ ] E2E tests added
 
 ### Remaining Medium Priority Bugs
-- Bug #19: Race condition in CircuitBreaker
-- Bug #31: Integer overflow in exponential backoff
-- Bug #32: TTL truncation in SQLite cache
-- Bug #33: History endpoint only supports fiat
-- Bug #36: CRDT apply_state accepts empty state
+- Bug #57, #59: Circuit breaker concurrency issues
 - Bug #66: Missing error context when all upstreams fail
-- Bug #56, #57, #59: Circuit breaker concurrency issues
+- Bug #78: Missing configuration validation
 
 ### Verification commands
 ```bash

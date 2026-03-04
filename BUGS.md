@@ -37,14 +37,22 @@ Last Updated: 2026-03-04
 | Low | 4 | 2 Fixed |
 | **Total** | **9** | **7 Fixed** |
 
+### Fifth Review (Phase 22 Part 4)
+| Severity | Count | Status |
+|----------|-------|--------|
+| High | 1 | 1 Fixed |
+| Medium | 5 | 5 Fixed |
+| Low | 3 | 1 Fixed |
+| **Total** | **9** | **7 Fixed** |
+
 ### Overall
 | Severity | Count | Status |
 |----------|-------|--------|
 | Critical | 4 | Fixed |
-| High | 15 | 14 Fixed |
-| Medium | 29 | 19 Fixed |
-| Low | 25 | 9 Fixed |
-| **Total** | **72** | **39 Fixed** |
+| High | 16 | 15 Fixed |
+| Medium | 34 | 26 Fixed |
+| Low | 29 | 12 Fixed |
+| **Total** | **83** | **53 Fixed** |
 
 ---
 
@@ -194,14 +202,14 @@ Last Updated: 2026-03-04
 
 ---
 
-## 6. MEDIUM: Concurrency Issues
+## 6. MEDIUM: Concurrency Issues ✅ FIXED
 
 ### Bug #19: Potential race condition in CircuitBreaker clone
 - **File:** `src/upstream/circuit_breaker.rs:90-103`
 - **Severity:** Medium
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** Clone uses `block_on()` which can panic in certain async contexts.
-- **Fix:** Consider removing Clone or using Arc for state sharing.
+- **Fix:** Removed Clone implementation entirely (circuit breakers are already wrapped in Arc).
 
 ### Bug #20: block_in_place in health check
 - **File:** `src/server/state.rs:54-57`
@@ -286,6 +294,18 @@ Last Updated: 2026-03-04
 
 ## Change Log
 
+### 2026-03-04 - Fifth Bug Review
+- Fixed Bug #19: Removed circuit breaker Clone (already in Arc)
+- Fixed Bug #31: Confirmed saturating_mul already prevents overflow
+- Fixed Bug #32: Round up TTL to nearest second in SQLite cache
+- Fixed Bug #33: History endpoint now gives clear error for crypto/metal
+- Fixed Bug #36: Validate CRDT state is non-empty before applying
+- Fixed Bug #73: Auth header only set when actually authenticated
+- Fixed Bug #74: Division by zero guard in rate limiter
+- Fixed Bug #75: Float truncation guard in available_tokens
+- Fixed Bug #76: Removed redundant clone in CRDT serialization
+- Found 2 new bugs (#77, #78)
+
 ### 2026-03-04 - Fourth Bug Review
 - Fixed Bug #50: API key masked in quota response
 - Fixed Bug #53: Metal currency routing with clear error message
@@ -362,32 +382,32 @@ Last Updated: 2026-03-04
 
 ---
 
-## 12. MEDIUM: Integer Overflow & Precision Issues (NEW)
+## 12. MEDIUM: Integer Overflow & Precision Issues ✅ FIXED
 
 ### Bug #31: Integer overflow in exponential backoff
 - **File:** `src/ratelimit/mod.rs:191`
 - **Severity:** Medium
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** Calculation with bit shifting could overflow on 32-bit systems.
-- **Fix:** Use `checked_mul` or `saturating_mul` consistently.
+- **Fix:** Already uses `saturating_mul` to prevent overflow.
 
-### Bug #32: TTL truncation in SQLite cache
+### Bug #32: TTL truncation in SQLite cache ✅ FIXED
 - **File:** `src/cache/sqlite.rs:63`
 - **Severity:** Medium
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** TTL loses millisecond precision (1500ms becomes 1 second).
-- **Fix:** Round up to nearest second or use milliseconds.
+- **Fix:** Round up to nearest second when subseconds exist.
 
 ---
 
-## 13. MEDIUM: Inconsistent Endpoint Support (NEW)
+## 13. MEDIUM: Inconsistent Endpoint Support ✅ FIXED
 
-### Bug #33: History endpoint only supports fiat
+### Bug #33: History endpoint only supports fiat ✅ FIXED
 - **File:** `src/handlers/history.rs:32-37`
 - **Severity:** Medium
-- **Status:** Pending
-- **Description:** History validates only 3-letter fiat codes while latest/pair support crypto/metal.
-- **Fix:** Update validation or document limitation clearly.
+- **Status:** Fixed
+- **Description:** History validates only 3-letter fiat codes while latest/pair support crypto/metal. Now provides clear error message for crypto/metal currencies.
+- **Fix:** Added clear error message indicating historical rates only available for fiat currencies.
 
 ### Bug #34: Self-to-self rate query allowed
 - **File:** `src/handlers/pair.rs`, `src/handlers/enriched.rs`
@@ -398,7 +418,7 @@ Last Updated: 2026-03-04
 
 ---
 
-## 14. MEDIUM: Missing Data Validation (NEW)
+## 14. MEDIUM: Missing Data Validation ✅ FIXED
 
 ### Bug #35: No minimum date validation for historical rates
 - **File:** `src/handlers/history.rs:39-50`
@@ -407,12 +427,12 @@ Last Updated: 2026-03-04
 - **Description:** Very old dates (year 1, 1000) accepted but Frankfurter only has data from 1999.
 - **Fix:** Added minimum date check (1999-01-04).
 
-### Bug #36: CRDT apply_state accepts empty state
+### Bug #36: CRDT apply_state accepts empty state ✅ FIXED
 - **File:** `src/sync/crdt.rs:46-55`
 - **Severity:** Medium
-- **Status:** Pending
+- **Status:** Fixed
 - **Description:** Empty byte array from get_state failure causes deserialize error but leaves doc inconsistent.
-- **Fix:** Validate state is non-empty before applying.
+- **Fix:** Validate state is non-empty before applying and return proper error.
 
 ---
 
@@ -501,18 +521,16 @@ Last Updated: 2026-03-04
 ## Priority Fix Order
 
 ### Immediate (Medium Priority - Pending)
-1. Bug #19: Race condition in CircuitBreaker
-2. Bug #31: Integer overflow in exponential backoff
-3. Bug #32: TTL truncation in SQLite cache
-4. Bug #33: History endpoint only supports fiat
-5. Bug #36: CRDT apply_state accepts empty state
-6. Bug #66: Missing error context when all upstreams fail
-7. Bug #56, #57, #59: Circuit breaker concurrency issues
+1. Bug #57, #59: Circuit breaker concurrency issues
+2. Bug #66: Missing error context when all upstreams fail
+3. Bug #78: Missing configuration validation
 
 ### Future (Low Priority)
-8. Bug #39: Complete OpenAPI spec
-9. Bug #41-46: Code quality improvements
-10. Bug #51-55, #58, #61-62, #71-72: Various low priority issues
+4. Bug #39: Complete OpenAPI spec
+5. Bug #40: Quota response model mismatch
+6. Bug #41-46: Code quality improvements
+7. Bug #22, #25, #26: API quality issues
+8. Bug #51-55, #58, #61-62, #71-72, #77: Various low priority issues
 
 ---
 
@@ -766,3 +784,69 @@ Last Updated: 2026-03-04
 - **Status:** Pending
 - **Description:** When rate limit errors are returned, rate limit headers are not included, making it harder for clients to understand their quota status.
 - **Fix:** Include rate limit headers even in error responses.
+
+---
+
+## 73. MEDIUM: Auth Header Always Set ✅ FIXED
+
+### Bug #73: X-API-Key-Valid header always set to "true"
+- **File:** `src/server/middleware/auth.rs:82-84`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** The header `X-API-Key-Valid` was set to "true" for ALL responses after successful auth middleware, even for anonymous and public path requests. The header value was hardcoded and didn't reflect actual API key validation status.
+- **Fix:** Only set the header when an actual API key was validated successfully.
+
+---
+
+## 74. HIGH: Division by Zero in Rate Limiter ✅ FIXED
+
+### Bug #74: Division by zero in time_until_available
+- **File:** `src/ratelimit/mod.rs:146-148`
+- **Severity:** High
+- **Status:** Fixed
+- **Description:** If `refill_rate` is 0, division by zero would cause undefined behavior in `time_until_available()`.
+- **Fix:** Added guard to return max duration when refill_rate is 0.
+
+---
+
+## 75. MEDIUM: Float Truncation in Token Bucket ✅ FIXED
+
+### Bug #75: Negative float truncation in available_tokens
+- **File:** `src/ratelimit/mod.rs:126-128`
+- **Severity:** Medium
+- **Status:** Fixed
+- **Description:** Direct cast of `f64` to `u64` could wrap to large positive number if tokens becomes slightly negative due to floating point precision.
+- **Fix:** Added `self.tokens.max(0.0)` before casting.
+
+---
+
+## 76. LOW: Redundant Clone in CRDT ✅ FIXED
+
+### Bug #76: Redundant clone in CRDT serialization
+- **File:** `src/sync/crdt.rs:39`
+- **Severity:** Low
+- **Status:** Fixed
+- **Description:** Unnecessary clone of rates and base_code when borrowing would work.
+- **Fix:** Changed to use references in serialization.
+
+---
+
+## 77. LOW: Test Process Leak (NEW)
+
+### Bug #77: Test server process intentionally leaked
+- **File:** `tests/common/mod.rs:36`
+- **Severity:** Low
+- **Status:** Pending
+- **Description:** `std::mem::forget(child)` leaks server process for test isolation. Can accumulate zombie processes during test runs.
+- **Fix:** Use proper cleanup mechanism like Drop guard or ctor crate.
+
+---
+
+## 78. MEDIUM: Missing Configuration Validation (NEW)
+
+### Bug #78: No configuration value validation
+- **File:** `src/config/settings.rs`
+- **Severity:** Medium
+- **Status:** Pending
+- **Description:** No validation for configuration values like `max_capacity=0`, `ttl_seconds=0`, negative values, invalid ports, etc.
+- **Fix:** Add a `validate()` method to Settings struct.

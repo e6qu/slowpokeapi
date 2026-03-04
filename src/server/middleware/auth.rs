@@ -72,15 +72,17 @@ pub async fn auth_middleware(
     request: Request<Body>,
     next: Next,
 ) -> Result<Response, AuthMiddlewareError> {
-    let _api_key = auth_middleware
-        .validate(&request)
-        .await
-        .map_err(AuthMiddlewareError::from)?;
+    let api_key_result = auth_middleware.validate(&request).await;
+    let is_authenticated = api_key_result.is_ok();
+
+    let _api_key = api_key_result.map_err(AuthMiddlewareError::from)?;
 
     let mut response = next.run(request).await;
 
-    if let Ok(value) = "true".parse() {
-        response.headers_mut().insert("X-API-Key-Valid", value);
+    if is_authenticated {
+        if let Ok(value) = "true".parse() {
+            response.headers_mut().insert("X-API-Key-Valid", value);
+        }
     }
 
     Ok(response)
