@@ -29,7 +29,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ steps.get_version.outputs.version }}
           draft: false
@@ -84,7 +84,7 @@ jobs:
           7z a ../../../slowpokeapi-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip slowpokeapi.exe
 
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             slowpokeapi-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.*
@@ -157,7 +157,7 @@ jobs:
           helm package deploy/helm/slowpokeapi --destination ./
 
       - name: Upload Chart to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: slowpokeapi-${{ needs.create-release.outputs.version }}.tgz
 
