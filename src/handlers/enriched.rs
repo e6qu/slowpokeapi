@@ -230,7 +230,7 @@ pub async fn get_enriched(
 
 fn build_upstream_request(source: &str, base: &str) -> UpstreamRequestInfo {
     let endpoint = match source {
-        "frankfurter" => format!("https://api.frankfurter.app/latest?from={}", base),
+        "frankfurter" => format!("https://api.frankfurter.app/latest?from={base}"),
         "fawazahmed0" => format!(
             "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{}.json",
             base.to_lowercase()

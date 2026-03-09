@@ -206,6 +206,18 @@ fn latest_rates_response_serialization() {
     rates.insert("EUR".to_string(), 0.92);
     rates.insert("GBP".to_string(), 0.79);
 
+    let data_source = DataSourceInfo {
+        source: "test".to_string(),
+        last_retrieved: "2023-11-15T00:00:00Z".to_string(),
+        last_cached: None,
+        upstream_request: UpstreamRequestInfo {
+            endpoint: "https://test.example.com/rates".to_string(),
+            method: None,
+            headers: None,
+            payload: None,
+        },
+    };
+
     let response = LatestRatesResponse {
         result: ResponseResult::Success,
         documentation: "https://example.com/docs".to_string(),
@@ -215,6 +227,7 @@ fn latest_rates_response_serialization() {
         time_next_update_utc: "2023-11-16T00:00:00Z".to_string(),
         base_code: "USD".to_string(),
         conversion_rates: rates,
+        data_source,
     };
 
     let json = serde_json::to_string(&response).unwrap();
@@ -229,6 +242,18 @@ fn latest_rates_response_serialization() {
 
 #[test]
 fn pair_response_serialization() {
+    let data_source = DataSourceInfo {
+        source: "test".to_string(),
+        last_retrieved: "2023-11-15T00:00:00Z".to_string(),
+        last_cached: Some("2023-11-15T00:05:00Z".to_string()),
+        upstream_request: UpstreamRequestInfo {
+            endpoint: "https://test.example.com/pair".to_string(),
+            method: None,
+            headers: None,
+            payload: None,
+        },
+    };
+
     let response = PairResponse {
         result: ResponseResult::Success,
         documentation: "https://example.com/docs".to_string(),
@@ -240,6 +265,7 @@ fn pair_response_serialization() {
         target_code: "EUR".to_string(),
         conversion_rate: 0.92,
         conversion_result: Some(92.0),
+        data_source,
     };
 
     let json = serde_json::to_string(&response).unwrap();
