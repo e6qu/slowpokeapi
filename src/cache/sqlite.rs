@@ -60,7 +60,11 @@ where
         let value_json = serde_json::to_string(&value)
             .map_err(|e| Error::Internal(format!("Failed to serialize cache value: {e}")))?;
 
-        let expires_at = ttl.map(|d| chrono::Utc::now().timestamp() + d.as_secs() as i64);
+        let expires_at = ttl.map(|d| {
+            let secs = d.as_secs();
+            let extra_second = if d.subsec_nanos() > 0 { 1 } else { 0 };
+            chrono::Utc::now().timestamp() + secs as i64 + extra_second
+        });
 
         sqlx::query(
             r#"
