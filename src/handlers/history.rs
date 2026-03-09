@@ -1,10 +1,9 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
 
-use crate::models::{
-    is_crypto_code, is_metal_code, HistoricalRate, HistoricalResponse, ResponseResult,
-};
+use crate::models::{DataSourceInfo, HistoricalRate, HistoricalResponse, ResponseResult};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -89,6 +88,8 @@ pub async fn get_history(
 }
 
 fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> HistoricalResponse {
+    let now = Utc::now();
+
     HistoricalResponse {
         result: ResponseResult::Success,
         documentation: DOCUMENTATION_URL.to_string(),
@@ -98,5 +99,15 @@ fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> Hi
         base_code: rates.base_code.clone(),
         conversion_rates: rates.rates.clone(),
         conversion_results: None,
+        data_source: DataSourceInfo {
+            source: "frankfurter".to_string(), // Historical rates only from Frankfurter
+            source_timestamp_unix: now.timestamp(),
+            source_timestamp_utc: now.to_rfc3339(),
+            cached: false,
+            cache_timestamp_unix: None,
+            cache_timestamp_utc: None,
+        },
     }
 }
+
+use crate::models::{is_crypto_code, is_metal_code};

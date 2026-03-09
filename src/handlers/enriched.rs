@@ -1,9 +1,10 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
 
 use crate::cache::Cache;
-use crate::models::{CurrencyMetadata, EnrichedResponse, ResponseResult};
+use crate::models::{CurrencyMetadata, DataSourceInfo, EnrichedResponse, ResponseResult};
 use crate::server::AppState;
 
 fn get_metadata(code: &str) -> Option<CurrencyMetadata> {
@@ -152,14 +153,21 @@ pub async fn get_enriched(
 
     let cache_key = format!("enriched:{base}:{target}");
 
+    // Try cache with metadata first
     if let Some(ref cache) = state.rate_cache {
-        match cache.get(&cache_key).await {
-            Ok(Some(rates)) => {
-                let rate = rates.rates.get(&target).copied().ok_or((
+        match cache.get_with_metadata(&cache_key).await {
+            Ok(Some(cache_result)) => {
+                let rate = cache_result.value.rates.get(&target).copied().ok_or((
                     StatusCode::NOT_FOUND,
                     format!("Currency rate not found: {target}"),
                 ))?;
-                return Ok(Json(build_response(&base, rate, target_metadata)));
+                let source_str = cache_result.value.source.to_string();
+                return Ok(Json(build_response(
+                    &base,
+                    rate,
+                    target_metadata,
+                    build_data_source_info(&source_str, true, Some(&cache_result)),
+                )));
             }
             Ok(None) => {}
             Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
@@ -182,15 +190,49 @@ pub async fn get_enriched(
                 StatusCode::NOT_FOUND,
                 format!("Currency rate not found: {target}"),
             ))?;
+            let source_str = rates.source.to_string();
 
             if let Some(ref cache) = state.rate_cache {
                 if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
                     tracing::warn!("Cache set error: {}", e);
                 }
             }
-            Ok(Json(build_response(&base, rate, target_metadata)))
+            Ok(Json(build_response(
+                &base,
+                rate,
+                target_metadata,
+                build_data_source_info(&source_str, false, None),
+            )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+fn build_data_source_info(
+    source: &str,
+    _cached: bool,
+    cache_result: Option<&crate::cache::CacheResult<crate::models::RateCollection>>,
+) -> DataSourceInfo {
+    let now = Utc::now();
+
+    if let Some(cr) = cache_result {
+        DataSourceInfo {
+            source: source.to_string(),
+            source_timestamp_unix: cr.source_timestamp.timestamp(),
+            source_timestamp_utc: cr.source_timestamp.to_rfc3339(),
+            cached: true,
+            cache_timestamp_unix: cr.cached_at.map(|t| t.timestamp()),
+            cache_timestamp_utc: cr.cached_at.map(|t| t.to_rfc3339()),
+        }
+    } else {
+        DataSourceInfo {
+            source: source.to_string(),
+            source_timestamp_unix: now.timestamp(),
+            source_timestamp_utc: now.to_rfc3339(),
+            cached: false,
+            cache_timestamp_unix: None,
+            cache_timestamp_utc: None,
+        }
     }
 }
 
@@ -198,6 +240,7 @@ fn build_response(
     base_code: &str,
     conversion_rate: f64,
     target_data: CurrencyMetadata,
+    data_source: DataSourceInfo,
 ) -> EnrichedResponse {
     let now = chrono::Utc::now();
 
@@ -209,5 +252,6 @@ fn build_response(
         target_code: target_data.code.clone(),
         conversion_rate,
         target_data,
+        data_source,
     }
 }

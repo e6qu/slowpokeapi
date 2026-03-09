@@ -1,10 +1,11 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use chrono::Utc;
 use moka::sync::Cache as MokaCache;
 
 use super::metrics::CACHE_METRICS;
-use super::Cache;
+use super::{Cache, CacheLevel, CacheResult};
 use crate::Error;
 
 pub struct MemoryCache<K, V>
@@ -47,6 +48,29 @@ where
 
         CACHE_METRICS.observe_latency("get", start.elapsed());
         Ok(result)
+    }
+
+    async fn get_with_metadata(&self, key: &K) -> Result<Option<CacheResult<V>>, Error> {
+        let start = std::time::Instant::now();
+        let result = self.inner.get(key);
+
+        let cache_result = result.map(|value| CacheResult {
+            value,
+            // For memory cache, we don't store original timestamp separately
+            // Use current time as approximation (data is fresh when in L1)
+            source_timestamp: Utc::now(),
+            cached_at: None,
+            cache_level: CacheLevel::L1,
+        });
+
+        if cache_result.is_some() {
+            CACHE_METRICS.record_hit();
+        } else {
+            CACHE_METRICS.record_miss();
+        }
+
+        CACHE_METRICS.observe_latency("get", start.elapsed());
+        Ok(cache_result)
     }
 
     async fn set(&self, key: K, value: V, _ttl: Option<Duration>) -> Result<(), Error> {

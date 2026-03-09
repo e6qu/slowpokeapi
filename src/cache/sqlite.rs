@@ -1,10 +1,11 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use chrono::{TimeZone, Utc};
 use serde::{de::DeserializeOwned, Serialize};
 use sqlx::SqlitePool;
 
-use super::Cache;
+use super::{Cache, CacheLevel, CacheResult};
 use crate::Error;
 
 pub struct SqliteCache {
@@ -55,6 +56,37 @@ where
         }
     }
 
+    async fn get_with_metadata(&self, key: &K) -> Result<Option<CacheResult<V>>, Error> {
+        let key_str = key.to_string();
+        let now = chrono::Utc::now().timestamp();
+
+        let result: Option<(String, i64)> = sqlx::query_as(
+            "SELECT value, created_at FROM cache_entries WHERE key = ? AND (expires_at IS NULL OR expires_at > ?)",
+        )
+        .bind(&key_str)
+        .bind(now)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match result {
+            Some((value_json, created_at)) => {
+                let value: V = serde_json::from_str(&value_json).map_err(|e| {
+                    Error::Internal(format!("Failed to deserialize cache value: {e}"))
+                })?;
+
+                let cached_at = Utc.timestamp_opt(created_at, 0).single();
+
+                Ok(Some(CacheResult {
+                    value,
+                    source_timestamp: cached_at.unwrap_or_else(Utc::now), // Fallback
+                    cached_at,
+                    cache_level: CacheLevel::L2,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
     async fn set(&self, key: K, value: V, ttl: Option<Duration>) -> Result<(), Error> {
         let key_str = key.to_string();
         let value_json = serde_json::to_string(&value)
@@ -70,7 +102,7 @@ where
             r#"
             INSERT INTO cache_entries (key, value, expires_at)
             VALUES (?, ?, ?)
-            ON CONFLICT(key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at, created_at = strftime('%s', 'now')
             "#,
         )
         .bind(&key_str)

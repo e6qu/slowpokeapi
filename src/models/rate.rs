@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -11,6 +12,18 @@ pub enum Source {
     CoinGecko,
     CoinCap,
     Cached,
+}
+
+impl fmt::Display for Source {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Source::Frankfurter => write!(f, "frankfurter"),
+            Source::FawazAhmed => write!(f, "fawazahmed0"),
+            Source::CoinGecko => write!(f, "coingecko"),
+            Source::CoinCap => write!(f, "coincap"),
+            Source::Cached => write!(f, "cache"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

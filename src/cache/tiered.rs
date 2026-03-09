@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+
 use serde::{de::DeserializeOwned, Serialize};
 
-use super::{Cache, MemoryCache, SqliteCache};
+use super::{Cache, CacheResult, MemoryCache, SqliteCache};
 use crate::Error;
 
 pub struct TieredCache<K, V>
@@ -39,6 +40,23 @@ where
         if let Some(value) = <SqliteCache as Cache<K, V>>::get(&self.l2, key).await? {
             self.l1.set(key.clone(), value.clone(), None).await?;
             return Ok(Some(value));
+        }
+
+        Ok(None)
+    }
+
+    async fn get_with_metadata(&self, key: &K) -> Result<Option<CacheResult<V>>, Error> {
+        // Try L1 (memory cache) first
+        if let Some(result) = self.l1.get_with_metadata(key).await? {
+            return Ok(Some(result));
+        }
+
+        // Try L2 (SQLite cache)
+        if let Some(result) = <SqliteCache as Cache<K, V>>::get_with_metadata(&self.l2, key).await?
+        {
+            // Populate L1 cache with the value
+            self.l1.set(key.clone(), result.value.clone(), None).await?;
+            return Ok(Some(result));
         }
 
         Ok(None)

@@ -1,9 +1,12 @@
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
 
 use crate::cache::Cache;
-use crate::models::{is_crypto_code, is_metal_code, PairResponse, RateCollection, ResponseResult};
+use crate::models::{
+    is_crypto_code, is_metal_code, DataSourceInfo, PairResponse, RateCollection, ResponseResult,
+};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -66,15 +69,21 @@ pub async fn get_pair(
 
     let cache_key = format!("pair:{base}:{target}");
 
+    // Try cache with metadata first
     if let Some(ref cache) = state.rate_cache {
-        match cache.get(&cache_key).await {
-            Ok(Some(rates)) => {
-                let rate = rates.rates.get(&target).copied().ok_or((
+        match cache.get_with_metadata(&cache_key).await {
+            Ok(Some(cache_result)) => {
+                let rate = cache_result.value.rates.get(&target).copied().ok_or((
                     StatusCode::NOT_FOUND,
                     format!("Currency not found: {target}"),
                 ))?;
+                let source_str = cache_result.value.source.to_string();
                 return Ok(Json(build_response_with_rate(
-                    &rates, &target, rate, amount,
+                    &cache_result.value,
+                    &target,
+                    rate,
+                    amount,
+                    build_data_source_info(&source_str, true, Some(&cache_result)),
                 )));
             }
             Ok(None) => {}
@@ -98,6 +107,7 @@ pub async fn get_pair(
                 StatusCode::NOT_FOUND,
                 format!("Currency not found: {target}"),
             ))?;
+            let source_str = rates.source.to_string();
 
             if let Some(ref cache) = state.rate_cache {
                 if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
@@ -105,10 +115,42 @@ pub async fn get_pair(
                 }
             }
             Ok(Json(build_response_with_rate(
-                &rates, &target, rate, amount,
+                &rates,
+                &target,
+                rate,
+                amount,
+                build_data_source_info(&source_str, false, None),
             )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+fn build_data_source_info(
+    source: &str,
+    _cached: bool,
+    cache_result: Option<&crate::cache::CacheResult<RateCollection>>,
+) -> DataSourceInfo {
+    let now = Utc::now();
+
+    if let Some(cr) = cache_result {
+        DataSourceInfo {
+            source: source.to_string(),
+            source_timestamp_unix: cr.source_timestamp.timestamp(),
+            source_timestamp_utc: cr.source_timestamp.to_rfc3339(),
+            cached: true,
+            cache_timestamp_unix: cr.cached_at.map(|t| t.timestamp()),
+            cache_timestamp_utc: cr.cached_at.map(|t| t.to_rfc3339()),
+        }
+    } else {
+        DataSourceInfo {
+            source: source.to_string(),
+            source_timestamp_unix: now.timestamp(),
+            source_timestamp_utc: now.to_rfc3339(),
+            cached: false,
+            cache_timestamp_unix: None,
+            cache_timestamp_utc: None,
+        }
     }
 }
 
@@ -117,6 +159,7 @@ fn build_response_with_rate(
     target: &str,
     rate: f64,
     amount: Option<f64>,
+    data_source: DataSourceInfo,
 ) -> PairResponse {
     let now = chrono::Utc::now();
     let next_update = now + chrono::Duration::hours(24);
@@ -134,5 +177,6 @@ fn build_response_with_rate(
         target_code: target.to_uppercase(),
         conversion_rate: rate,
         conversion_result,
+        data_source,
     }
 }

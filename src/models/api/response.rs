@@ -2,6 +2,25 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
 
+/// Data source information for transparent API responses
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DataSourceInfo {
+    /// Name of the upstream data source (e.g., "frankfurter", "coingecko")
+    pub source: String,
+    /// Timestamp when the data was originally retrieved from upstream
+    pub source_timestamp_unix: i64,
+    /// UTC timestamp when the data was originally retrieved from upstream
+    pub source_timestamp_utc: String,
+    /// Whether the data was served from cache
+    pub cached: bool,
+    /// Timestamp when the data was cached (if cached)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_timestamp_unix: Option<i64>,
+    /// UTC timestamp when the data was cached (if cached)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_timestamp_utc: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum ResponseResult {
     #[serde(rename = "success")]
@@ -40,6 +59,8 @@ pub struct LatestRatesResponse {
     pub time_next_update_utc: String,
     pub base_code: String,
     pub conversion_rates: HashMap<String, f64>,
+    /// Data source information for transparency
+    pub data_source: DataSourceInfo,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -55,6 +76,8 @@ pub struct PairResponse {
     pub conversion_rate: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub conversion_result: Option<f64>,
+    /// Data source information for transparency
+    pub data_source: DataSourceInfo,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -68,6 +91,8 @@ pub struct HistoricalResponse {
     pub conversion_rates: HashMap<String, f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub conversion_results: Option<HashMap<String, f64>>,
+    /// Data source information for transparency
+    pub data_source: DataSourceInfo,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -79,6 +104,8 @@ pub struct EnrichedResponse {
     pub target_code: String,
     pub conversion_rate: f64,
     pub target_data: crate::models::CurrencyMetadata,
+    /// Data source information for transparency
+    pub data_source: DataSourceInfo,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
