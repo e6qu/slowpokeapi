@@ -1,0 +1,147 @@
+groups:
+  - name: slowpokeapi
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: SlowPokeAPIHighErrorRate
+        expr: |
+          sum(rate(slowpokeapi_requests_total{status=~"5.."}[5m])) 
+          / 
+          sum(rate(slowpokeapi_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SlowPokeAPI high error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # High latency alert
+      - alert: SlowPokeAPIHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(slowpokeapi_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI high latency detected"
+          description: "P95 latency is {{ $value }}s over the last 5 minutes"
+
+      # Upstream failure alert
+      - alert: SlowPokeAPIUpstreamFailure
+        expr: |
+          sum(rate(slowpokeapi_upstream_requests_total{status!="200"}[5m])) 
+          by (upstream) 
+          / 
+          sum(rate(slowpokeapi_upstream_requests_total[5m])) 
+          by (upstream) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI upstream {{ $labels.upstream }} failing"
+          description: "Upstream {{ $labels.upstream }} has {{ $value | humanizePercentage }} failure rate"
+
+      # Circuit breaker open alert
+      - alert: SlowPokeAPICircuitBreakerOpen
+        expr: slowpokeapi_circuit_breaker_state == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI circuit breaker open"
+          description: "Circuit breaker for {{ $labels.upstream }} is open"
+
+      # Cache hit ratio low alert
+      - alert: SlowPokeAPICacheHitRatioLow
+        expr: |
+          rate(slowpokeapi_cache_hits_total[5m]) 
+          / 
+          (rate(slowpokeapi_cache_hits_total[5m]) + rate(slowpokeapi_cache_misses_total[5m])) < 0.5
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "SlowPokeAPI cache hit ratio low"
+          description: "Cache hit ratio is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # Rate limiting threshold alert
+      - alert: SlowPokeAPIRateLimitApproaching
+        expr: |
+          slowpokeapi_rate_limit_remaining 
+          / 
+          slowpokeapi_rate_limit_limit < 0.1
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "SlowPokeAPI rate limit approaching"
+          description: "Rate limit at {{ $value | humanizePercentage }} remaining"
+
+      # Instance down alert
+      - alert: SlowPokeAPIDown
+        expr: up{job="slowpokeapi"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SlowPokeAPI instance down"
+          description: "SlowPokeAPI instance {{ $labels.instance }} is down"
+
+      # Sync errors alert
+      - alert: SlowPokeAPISyncErrors
+        expr: |
+          rate(slowpokeapi_sync_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI sync errors detected"
+          description: "Sync error rate is {{ $value }} per second"
+
+      # High request rate alert (potential DDoS)
+      - alert: SlowPokeAPIHighRequestRate
+        expr: |
+          sum(rate(slowpokeapi_requests_total[1m])) > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI high request rate"
+          description: "Request rate is {{ $value }} req/s, possible DDoS attack"
+
+      # Database connection issues
+      - alert: SlowPokeAPIDatabaseIssues
+        expr: |
+          slowpokeapi_db_connections_failed_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SlowPokeAPI database connection failures"
+          description: "{{ $value }} database connection failures detected"
+
+      # Memory usage alert (container-specific)
+      - alert: SlowPokeAPIMemoryHigh
+        expr: |
+          container_memory_usage_bytes{container="slowpokeapi"} 
+          / 
+          container_spec_memory_limit_bytes{container="slowpokeapi"} > 0.85
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI memory usage high"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # CPU usage alert (container-specific)
+      - alert: SlowPokeAPICPUHigh
+        expr: |
+          rate(container_cpu_usage_seconds_total{container="slowpokeapi"}[5m]) > 0.8
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SlowPokeAPI CPU usage high"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
