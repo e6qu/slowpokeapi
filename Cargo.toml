@@ -8,7 +8,7 @@ license = "MIT"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-axum = { version = "0.7", features = ["macros"] }
+axum = { version = "0.8", features = ["macros"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["trace", "cors"] }
 serde = { version = "1", features = ["derive"] }
