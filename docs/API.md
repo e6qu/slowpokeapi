@@ -1,46 +1,40 @@
 # API Reference
 
-Complete API documentation for SlowPokeAPI.
+API documentation for SlowPokeAPI.
 
 ## Base URL
 
 ```
-http://localhost:8081
+http://localhost:8080
 ```
 
 ## Authentication
 
-API key authentication is optional and controlled via `AUTH_ENABLED` environment variable.
+API key authentication is optional and controlled via configuration.
 
 ### Using API Keys
 
 Include the API key in the `X-API-Key` header:
 
 ```bash
-curl -H "X-API-Key: your-api-key" http://localhost:8081/v1/latest/USD
+curl -H "X-API-Key: your-api-key" http://localhost:8080/v1/latest/USD
 ```
 
 ### Public Endpoints
 
-The following endpoints are always accessible without authentication:
+The following endpoints are accessible without authentication:
 
 - `GET /health` - Health check
-- `GET /healthz` - Kubernetes liveness probe  
-- `GET /readyz` - Kubernetes readiness probe
-- `GET /livez` - Kubernetes liveness probe
+- `GET /healthz` - Liveness probe
+- `GET /readyz` - Readiness probe
+- `GET /livez` - Liveness probe
 - `GET /metrics` - Prometheus metrics
 - `GET /swagger-ui` - Swagger UI documentation
 - `GET /api-docs/openapi.json` - OpenAPI specification
 
 ## Rate Limiting
 
-Rate limiting is enabled by default with three tiers:
-
-| Tier | Rate | Burst |
-|------|------|-------|
-| Global | 250 req/s | 500 |
-| Authenticated | 25 req/s | 50 |
-| Anonymous | 5 req/s | 10 |
+Rate limiting behavior depends on configuration.
 
 ### Rate Limit Headers
 
@@ -53,7 +47,7 @@ Rate limiting is enabled by default with three tiers:
 
 ### Quota Endpoint
 
-Check your current quota status:
+Check current quota status:
 
 ```bash
 GET /v1/quota
@@ -63,9 +57,10 @@ GET /v1/quota
 
 ```json
 {
-  "plan_quota": 100,
-  "requests_remaining": 95,
-  "refresh_day_of_month": 1
+  "api_key": "***...abcd",
+  "limit": 100,
+  "remaining": 95,
+  "reset_seconds": 3600
 }
 ```
 
@@ -81,19 +76,19 @@ List all supported currencies.
 
 ```json
 {
-  "result": "success",
-  "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
-  "supported_codes": [
-    ["USD", "United States Dollar"],
-    ["EUR", "Euro"],
-    ["GBP", "British Pound Sterling"],
-    ["BTC", "Bitcoin"],
-    ["ETH", "Ethereum"],
-    ["XAU", "Gold"]
-  ]
+  "AED": "United Arab Emirates Dirham",
+  "AFN": "Afghan Afghani",
+  "EUR": "Euro",
+  "GBP": "British Pound Sterling",
+  "USD": "United States Dollar"
 }
 ```
+
+### GET /v1/currencies.min
+
+List currencies in minimal format.
+
+**Response:** Same as `/v1/currencies` but typically cached.
 
 ### GET /v1/latest/{base_code}
 
@@ -111,28 +106,26 @@ Get latest exchange rates for a base currency.
 {
   "result": "success",
   "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
   "time_last_update_unix": 1704067200,
-  "time_last_update_utc": "Mon, 01 Jan 2024 00:00:00 +0000",
+  "time_last_update_utc": "2024-01-01T00:00:00Z",
   "time_next_update_unix": 1704153600,
-  "time_next_update_utc": "Tue, 02 Jan 2024 00:00:00 +0000",
+  "time_next_update_utc": "2024-01-02T00:00:00Z",
   "base_code": "USD",
   "conversion_rates": {
     "EUR": 0.9234,
     "GBP": 0.7891,
-    "JPY": 148.50,
-    "BTC": 0.00002341
+    "JPY": 148.50
+  },
+  "data_source": {
+    "source": "frankfurter",
+    "last_retrieved": "2024-01-01T00:00:00Z",
+    "last_cached": null,
+    "upstream_request": {
+      "endpoint": "https://api.frankfurter.app/latest?from=USD"
+    }
   }
 }
 ```
-
-**Errors:**
-
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | INVALID_CURRENCY_CODE | Currency code must be 3 letters |
-| 404 | CURRENCY_NOT_FOUND | Unknown currency code |
-| 429 | RATE_LIMIT_EXCEEDED | Rate limit exceeded |
 
 ### GET /v1/pair/{base_code}/{target_code}
 
@@ -152,14 +145,21 @@ Convert between two currencies.
 {
   "result": "success",
   "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
   "time_last_update_unix": 1704067200,
-  "time_last_update_utc": "Mon, 01 Jan 2024 00:00:00 +0000",
+  "time_last_update_utc": "2024-01-01T00:00:00Z",
   "time_next_update_unix": 1704153600,
-  "time_next_update_utc": "Tue, 02 Jan 2024 00:00:00 +0000",
+  "time_next_update_utc": "2024-01-02T00:00:00Z",
   "base_code": "USD",
   "target_code": "EUR",
-  "conversion_rate": 0.9234
+  "conversion_rate": 0.9234,
+  "data_source": {
+    "source": "frankfurter",
+    "last_retrieved": "2024-01-01T00:00:00Z",
+    "last_cached": null,
+    "upstream_request": {
+      "endpoint": "https://api.frankfurter.app/latest?from=USD"
+    }
+  }
 }
 ```
 
@@ -169,28 +169,24 @@ Convert between two currencies.
 {
   "result": "success",
   "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
   "time_last_update_unix": 1704067200,
-  "time_last_update_utc": "Mon, 01 Jan 2024 00:00:00 +0000",
+  "time_last_update_utc": "2024-01-01T00:00:00Z",
   "time_next_update_unix": 1704153600,
-  "time_next_update_utc": "Tue, 02 Jan 2024 00:00:00 +0000",
+  "time_next_update_utc": "2024-01-02T00:00:00Z",
   "base_code": "USD",
   "target_code": "EUR",
   "conversion_rate": 0.9234,
-  "conversion_result": 92.34
+  "conversion_result": 92.34,
+  "data_source": {
+    "source": "frankfurter",
+    "last_retrieved": "2024-01-01T00:00:00Z",
+    "last_cached": null,
+    "upstream_request": {
+      "endpoint": "https://api.frankfurter.app/latest?from=USD"
+    }
+  }
 }
 ```
-
-**Errors:**
-
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | INVALID_CURRENCY_CODE | Invalid currency code format |
-| 400 | SAME_CURRENCY | Base and target are identical |
-| 400 | INVALID_AMOUNT | Amount must be positive and finite |
-| 404 | CURRENCY_NOT_FOUND | Unknown currency code |
-| 404 | RATE_NOT_AVAILABLE | Exchange rate not available |
-| 429 | RATE_LIMIT_EXCEEDED | Rate limit exceeded |
 
 ### GET /v1/history/{base_code}/{year}/{month}/{day}
 
@@ -208,6 +204,7 @@ Get historical exchange rates for a specific date.
 **Notes:**
 - Minimum date: 1999-01-04 (Frankfurter API limitation)
 - Future dates are rejected
+- Crypto and metal currencies are not supported
 
 **Response:**
 
@@ -215,7 +212,6 @@ Get historical exchange rates for a specific date.
 {
   "result": "success",
   "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
   "year": 2023,
   "month": 12,
   "day": 25,
@@ -224,53 +220,54 @@ Get historical exchange rates for a specific date.
     "EUR": 0.9123,
     "GBP": 0.7845,
     "JPY": 149.20
+  },
+  "data_source": {
+    "source": "frankfurter",
+    "last_retrieved": "2024-01-01T00:00:00Z",
+    "last_cached": null,
+    "upstream_request": {
+      "endpoint": "https://api.frankfurter.app/2023-12-25?from=USD"
+    }
   }
 }
 ```
 
-**Errors:**
+### GET /v1/enriched/{base_code}/{target_code}
 
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | INVALID_DATE | Invalid date format |
-| 400 | FUTURE_DATE | Date is in the future |
-| 400 | DATE_TOO_OLD | Date before 1999-01-04 |
-| 404 | CURRENCY_NOT_FOUND | Unknown currency code |
-| 404 | DATA_NOT_AVAILABLE | No data for this date |
-| 429 | RATE_LIMIT_EXCEEDED | Rate limit exceeded |
-
-### GET /v1/enriched/{base_code}
-
-Get exchange rates with additional metadata.
+Get exchange rate with additional metadata for the target currency.
 
 **Parameters:**
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | base_code | path | string | Yes | Base currency code |
+| target_code | path | string | Yes | Target currency code |
 
 **Response:**
 
 ```json
 {
   "result": "success",
-  "documentation": "https://github.com/e6qu/slowpokeapi",
-  "terms_of_use": "https://github.com/e6qu/slowpokeapi/blob/main/LICENSE",
   "time_last_update_unix": 1704067200,
-  "time_last_update_utc": "Mon, 01 Jan 2024 00:00:00 +0000",
-  "time_next_update_unix": 1704153600,
-  "time_next_update_utc": "Tue, 02 Jan 2024 00:00:00 +0000",
+  "time_last_update_utc": "2024-01-01T00:00:00Z",
   "base_code": "USD",
-  "conversion_rates": {
-    "EUR": {
-      "rate": 0.9234,
-      "rate_for_amount": 9.23,
-      "currency_name": "Euro"
-    },
-    "GBP": {
-      "rate": 0.7891,
-      "rate_for_amount": 7.89,
-      "currency_name": "British Pound Sterling"
+  "target_code": "EUR",
+  "conversion_rate": 0.9234,
+  "target_data": {
+    "code": "EUR",
+    "locale": "de-DE",
+    "two_letter_country_code": "DE",
+    "currency_name": "Euro",
+    "currency_name_short": "Euro",
+    "display_symbol": "€",
+    "flag_url": "https://flagcdn.com/w640/eu.png"
+  },
+  "data_source": {
+    "source": "frankfurter",
+    "last_retrieved": "2024-01-01T00:00:00Z",
+    "last_cached": null,
+    "upstream_request": {
+      "endpoint": "https://api.frankfurter.app/latest?from=USD"
     }
   }
 }
@@ -278,7 +275,7 @@ Get exchange rates with additional metadata.
 
 ### GET /health
 
-Combined health check endpoint.
+Deep health check endpoint.
 
 **Parameters:** None
 
@@ -287,11 +284,15 @@ Combined health check endpoint.
 ```json
 {
   "status": "healthy",
-  "timestamp": "2024-01-01T00:00:00Z",
-  "version": "1.0.0",
-  "database": "connected",
-  "sync_enabled": false,
-  "sync_peers": 0
+  "version": "0.1.0",
+  "uptime_seconds": 3600,
+  "checks": {
+    "database": {
+      "status": "pass",
+      "message": "SQLite connection healthy",
+      "latency_ms": 2
+    }
+  }
 }
 ```
 
@@ -300,54 +301,51 @@ Combined health check endpoint.
 ```json
 {
   "status": "unhealthy",
-  "timestamp": "2024-01-01T00:00:00Z",
-  "version": "1.0.0",
-  "database": "disconnected",
-  "error": "Database connection failed"
+  "version": "0.1.0",
+  "uptime_seconds": 3600,
+  "checks": {
+    "database": {
+      "status": "fail",
+      "message": "Database connection failed",
+      "latency_ms": 5000
+    }
+  }
 }
 ```
 
 ### GET /healthz
 
-Kubernetes liveness probe.
+Liveness probe. Returns "ok" if the service is running.
 
 **Parameters:** None
 
 **Response (200 OK):**
 
-```json
-{
-  "status": "ok"
-}
+```
+ok
 ```
 
 ### GET /readyz
 
-Kubernetes readiness probe.
+Readiness probe.
 
 **Parameters:** None
 
 **Response (200 OK):**
 
-```json
-{
-  "status": "ready",
-  "database": "connected"
-}
+```
+ok
 ```
 
 **Response (503):**
 
-```json
-{
-  "status": "not_ready",
-  "database": "disconnected"
-}
+```
+not ready
 ```
 
 ### GET /livez
 
-Kubernetes liveness probe (alternative).
+Liveness probe (alternative). Returns "ok" if the service is running.
 
 **Parameters:** None
 
@@ -374,13 +372,13 @@ slowpokeapi_request_duration_seconds_bucket{le="0.1"} 35
 
 ## Error Responses
 
-All errors follow this format:
+Errors follow this format:
 
 ```json
 {
   "result": "error",
-  "error-type": "ERROR_TYPE",
-  "error-message": "Human-readable description"
+  "error_type": "invalid-currency",
+  "message": "Invalid currency code: XYZ"
 }
 ```
 
@@ -389,20 +387,11 @@ All errors follow this format:
 | Error Type | HTTP Status | Description |
 |------------|-------------|-------------|
 | `malformed-request` | 400 | Invalid request format |
-| `invalid-currency-code` | 400 | Currency code must be 3 letters |
-| `same-currency` | 400 | Base and target currencies are identical |
-| `invalid-amount` | 400 | Amount must be positive |
+| `invalid-currency` | 400 | Invalid currency code |
 | `invalid-date` | 400 | Invalid date format |
-| `future-date` | 400 | Date is in the future |
-| `date-too-old` | 400 | Date before minimum (1999-01-04) |
-| `unsupported-code` | 404 | Unknown currency code |
-| `currency-not-found` | 404 | Currency not found |
-| `rate-not-available` | 404 | Exchange rate not available |
-| `data-not-available` | 404 | Historical data not available |
-| `metal-rates-unsupported` | 400 | Metal currencies not supported for this operation |
-| `rate-limit-exceeded` | 429 | Too many requests |
-| `invalid-api-key` | 401 | Invalid or missing API key |
-| `internal-error` | 500 | Server error |
+| `not-found` | 404 | Resource not found |
+| `quota-reached` | 429 | Rate limit exceeded |
+| `invalid-key` | 401 | Invalid API key |
 
 ## Currency Codes
 
@@ -412,23 +401,7 @@ Common codes: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, SEK, NZD
 
 ### Cryptocurrencies
 
-| Code | Name |
-|------|------|
-| BTC | Bitcoin |
-| ETH | Ethereum |
-| BNB | Binance Coin |
-| XRP | Ripple |
-| ADA | Cardano |
-| SOL | Solana |
-| DOT | Polkadot |
-| DOGE | Dogecoin |
-| AVAX | Avalanche |
-| MATIC | Polygon |
-| LINK | Chainlink |
-| UNI | Uniswap |
-| LTC | Litecoin |
-| BCH | Bitcoin Cash |
-| XLM | Stellar |
+Supported: BTC, ETH, BNB, XRP, ADA, SOL, DOT, DOGE, AVAX, MATIC, LINK, UNI, LTC, BCH, XLM
 
 ### Precious Metals
 
@@ -439,114 +412,16 @@ Common codes: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, SEK, NZD
 | XPT | Platinum |
 | XPD | Palladium |
 
-## RapidAPI Compatibility
-
-This API is designed to be compatible with RapidAPI's exchange rate API specification where possible.
-
-### Differences from RapidAPI
-
-1. **Authentication**: Uses `X-API-Key` header instead of `X-RapidAPI-Key`
-2. **Base URL**: Different host (your deployment vs RapidAPI)
-3. **Rate Limits**: Configurable per deployment
-4. **Additional Features**:
-   - Cryptocurrency support
-   - Precious metals support
-   - CRDT-based distributed sync
-   - Self-hosted option
-
-### Migration from RapidAPI
-
-Replace the base URL and header:
-
-```bash
-# RapidAPI
-curl -H "X-RapidAPI-Key: your-key" \
-  https://v6.exchangerate-api.com/v6/latest/USD
-
-# SlowPokeAPI
-curl -H "X-API-Key: your-key" \
-  http://your-host:8081/v1/latest/USD
-```
-
-## SDK Examples
-
-### JavaScript/TypeScript
-
-```typescript
-const API_BASE = 'http://localhost:8081';
-const API_KEY = 'your-api-key';
-
-async function getLatestRates(baseCode: string) {
-  const response = await fetch(`${API_BASE}/v1/latest/${baseCode}`, {
-    headers: API_KEY ? { 'X-API-Key': API_KEY } : {}
-  });
-  return response.json();
-}
-```
-
-### Python
-
-```python
-import requests
-
-API_BASE = 'http://localhost:8081'
-API_KEY = 'your-api-key'
-
-def get_latest_rates(base_code):
-    headers = {'X-API-Key': API_KEY} if API_KEY else {}
-    response = requests.get(f'{API_BASE}/v1/latest/{base_code}', headers=headers)
-    return response.json()
-```
-
-### Go
-
-```go
-package main
-
-import (
-    "encoding/json"
-    "net/http"
-)
-
-const apiBase = "http://localhost:8081"
-
-func getLatestRates(baseCode string) (map[string]interface{}, error) {
-    resp, err := http.Get(apiBase + "/v1/latest/" + baseCode)
-    if err != nil {
-        return nil, err
-    }
-    defer resp.Body.Close()
-    
-    var result map[string]interface{}
-    json.NewDecoder(resp.Body).Decode(&result)
-    return result, nil
-}
-```
-
-### Rust
-
-```rust
-use serde_json::Value;
-
-const API_BASE: &str = "http://localhost:8081";
-
-async fn get_latest_rates(base_code: &str) -> Result<Value, reqwest::Error> {
-    let url = format!("{}/v1/latest/{}", API_BASE, base_code);
-    let response = reqwest::get(&url).await?;
-    response.json().await
-}
-```
-
 ## OpenAPI/Swagger
 
 Interactive API documentation is available at:
 
 ```
-http://localhost:8081/swagger-ui
+http://localhost:8080/swagger-ui
 ```
 
 OpenAPI JSON specification:
 
 ```
-http://localhost:8081/api-docs/openapi.json
+http://localhost:8080/api-docs/openapi.json
 ```
