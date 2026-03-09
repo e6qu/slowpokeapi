@@ -2,11 +2,10 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use chrono::Utc;
+use std::collections::HashMap;
 
 use crate::cache::Cache;
-use crate::models::{
-    is_crypto_code, is_metal_code, DataSourceInfo, PairResponse, RateCollection, ResponseResult,
-};
+use crate::models::{DataSourceInfo, PairResponse, ResponseResult, UpstreamRequestInfo};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -83,7 +82,7 @@ pub async fn get_pair(
                     &target,
                     rate,
                     amount,
-                    build_data_source_info(&source_str, true, Some(&cache_result)),
+                    build_data_source_info_from_cache(&source_str, &cache_result),
                 )));
             }
             Ok(None) => {}
@@ -108,9 +107,26 @@ pub async fn get_pair(
                 format!("Currency not found: {target}"),
             ))?;
             let source_str = rates.source.to_string();
+            let upstream_request = build_upstream_request(&source_str, &base);
 
             if let Some(ref cache) = state.rate_cache {
-                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                if let Err(e) = cache
+                    .set_with_metadata(
+                        cache_key,
+                        rates.clone(),
+                        crate::cache::UpstreamRequestDetails {
+                            endpoint: upstream_request.endpoint.clone(),
+                            method: upstream_request
+                                .method
+                                .clone()
+                                .unwrap_or_else(|| "GET".to_string()),
+                            headers: upstream_request.headers.clone(),
+                            payload: upstream_request.payload.clone(),
+                        },
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("Cache set error: {}", e);
                 }
             }
@@ -119,43 +135,88 @@ pub async fn get_pair(
                 &target,
                 rate,
                 amount,
-                build_data_source_info(&source_str, false, None),
+                build_data_source_info_fresh(&source_str, upstream_request),
             )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_data_source_info(
+fn build_upstream_request(source: &str, base: &str) -> UpstreamRequestInfo {
+    let endpoint = match source {
+        "frankfurter" => format!("https://api.frankfurter.app/latest?from={}", base),
+        "fawazahmed0" => format!(
+            "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{}.json",
+            base.to_lowercase()
+        ),
+        "coingecko" => format!(
+            "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies=usd",
+            base.to_lowercase()
+        ),
+        "coincap" => "https://api.coincap.io/v2/assets".to_string(),
+        _ => "unknown".to_string(),
+    };
+
+    let (method, headers, payload) = match source {
+        "coingecko" | "coincap" => {
+            let mut headers = HashMap::new();
+            headers.insert("Accept".to_string(), "application/json".to_string());
+            (None, Some(headers), None)
+        }
+        _ => (None, None, None),
+    };
+
+    UpstreamRequestInfo {
+        endpoint,
+        method,
+        headers,
+        payload,
+    }
+}
+
+fn build_data_source_info_from_cache<V>(
     source: &str,
-    _cached: bool,
-    cache_result: Option<&crate::cache::CacheResult<RateCollection>>,
+    cache_result: &crate::cache::CacheResult<V>,
+) -> DataSourceInfo {
+    let upstream_request = UpstreamRequestInfo {
+        endpoint: cache_result.upstream_request.endpoint.clone(),
+        method: if cache_result.upstream_request.method == "GET" {
+            None
+        } else {
+            Some(cache_result.upstream_request.method.clone())
+        },
+        headers: cache_result.upstream_request.headers.clone(),
+        payload: cache_result.upstream_request.payload.clone(),
+    };
+
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved_unix: cache_result.retrieved_at.timestamp(),
+        last_retrieved_utc: cache_result.retrieved_at.to_rfc3339(),
+        last_cached_unix: cache_result.cached_at.map(|t| t.timestamp()),
+        last_cached_utc: cache_result.cached_at.map(|t| t.to_rfc3339()),
+        upstream_request,
+    }
+}
+
+fn build_data_source_info_fresh(
+    source: &str,
+    upstream_request: UpstreamRequestInfo,
 ) -> DataSourceInfo {
     let now = Utc::now();
 
-    if let Some(cr) = cache_result {
-        DataSourceInfo {
-            source: source.to_string(),
-            source_timestamp_unix: cr.source_timestamp.timestamp(),
-            source_timestamp_utc: cr.source_timestamp.to_rfc3339(),
-            cached: true,
-            cache_timestamp_unix: cr.cached_at.map(|t| t.timestamp()),
-            cache_timestamp_utc: cr.cached_at.map(|t| t.to_rfc3339()),
-        }
-    } else {
-        DataSourceInfo {
-            source: source.to_string(),
-            source_timestamp_unix: now.timestamp(),
-            source_timestamp_utc: now.to_rfc3339(),
-            cached: false,
-            cache_timestamp_unix: None,
-            cache_timestamp_utc: None,
-        }
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved_unix: now.timestamp(),
+        last_retrieved_utc: now.to_rfc3339(),
+        last_cached_unix: None,
+        last_cached_utc: None,
+        upstream_request,
     }
 }
 
 fn build_response_with_rate(
-    rates: &RateCollection,
+    rates: &crate::models::RateCollection,
     target: &str,
     rate: f64,
     amount: Option<f64>,
@@ -180,3 +241,5 @@ fn build_response_with_rate(
         data_source,
     }
 }
+
+use crate::models::{is_crypto_code, is_metal_code};

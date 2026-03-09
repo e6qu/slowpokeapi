@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use chrono::Utc;
 
-use crate::models::{DataSourceInfo, HistoricalRate, HistoricalResponse, ResponseResult};
+use crate::models::{DataSourceInfo, HistoricalResponse, ResponseResult, UpstreamRequestInfo};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -82,13 +82,33 @@ pub async fn get_history(
     };
 
     match upstream_manager.get_historical_rates(&base, date).await {
-        Ok(rates) => Ok(Json(build_response(&rates, year, month, day))),
+        Ok(rates) => Ok(Json(build_response(&rates, year, month, day, &base))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> HistoricalResponse {
+fn build_response(
+    rates: &crate::models::HistoricalRate,
+    year: i32,
+    month: u32,
+    day: u32,
+    base: &str,
+) -> HistoricalResponse {
     let now = Utc::now();
+
+    // Historical rates only come from Frankfurter
+    let upstream_request = UpstreamRequestInfo {
+        endpoint: format!(
+            "https://api.frankfurter.app/{}?from={}",
+            chrono::NaiveDate::from_ymd_opt(year, month, day)
+                .map(|d| d.to_string())
+                .unwrap_or_default(),
+            base
+        ),
+        method: None, // GET is default
+        headers: None,
+        payload: None,
+    };
 
     HistoricalResponse {
         result: ResponseResult::Success,
@@ -100,12 +120,12 @@ fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> Hi
         conversion_rates: rates.rates.clone(),
         conversion_results: None,
         data_source: DataSourceInfo {
-            source: "frankfurter".to_string(), // Historical rates only from Frankfurter
-            source_timestamp_unix: now.timestamp(),
-            source_timestamp_utc: now.to_rfc3339(),
-            cached: false,
-            cache_timestamp_unix: None,
-            cache_timestamp_utc: None,
+            source: "frankfurter".to_string(),
+            last_retrieved_unix: now.timestamp(),
+            last_retrieved_utc: now.to_rfc3339(),
+            last_cached_unix: None,
+            last_cached_utc: None,
+            upstream_request,
         },
     }
 }

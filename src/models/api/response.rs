@@ -7,18 +7,37 @@ use utoipa::ToSchema;
 pub struct DataSourceInfo {
     /// Name of the upstream data source (e.g., "frankfurter", "coingecko")
     pub source: String,
-    /// Timestamp when the data was originally retrieved from upstream
-    pub source_timestamp_unix: i64,
-    /// UTC timestamp when the data was originally retrieved from upstream
-    pub source_timestamp_utc: String,
-    /// Whether the data was served from cache
-    pub cached: bool,
-    /// Timestamp when the data was cached (if cached)
+    /// When the data was last retrieved from upstream (Unix timestamp)
+    pub last_retrieved_unix: i64,
+    /// When the data was last retrieved from upstream (UTC RFC3339)
+    pub last_retrieved_utc: String,
+    /// When the data was last cached (Unix timestamp), null if not cached
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache_timestamp_unix: Option<i64>,
-    /// UTC timestamp when the data was cached (if cached)
+    pub last_cached_unix: Option<i64>,
+    /// When the data was last cached (UTC RFC3339), null if not cached
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache_timestamp_utc: Option<String>,
+    pub last_cached_utc: Option<String>,
+    /// Upstream API call details
+    pub upstream_request: UpstreamRequestInfo,
+}
+
+/// Information about the upstream API call
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpstreamRequestInfo {
+    /// Full endpoint URL used to call the upstream API
+    pub endpoint: String,
+    /// HTTP method used (GET, POST, etc.)
+    /// Omitted if GET (the default)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub method: Option<String>,
+    /// Headers sent with the request (if any)
+    /// Omitted if no headers were used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<HashMap<String, String>>,
+    /// Payload/body sent with the request (if any)
+    /// Omitted if no payload was used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payload: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
