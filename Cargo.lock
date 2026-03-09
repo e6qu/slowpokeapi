@@ -2503,7 +2503,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "tower 0.4.13",
- "tower-http 0.5.2",
+ "tower-http 0.6.8",
  "tracing",
  "tracing-subscriber",
  "utoipa",
@@ -3049,7 +3049,6 @@ dependencies = [
  "pin-project-lite",
  "tower-layer",
  "tower-service",
- "tracing",
 ]
 
 [[package]]
@@ -3068,6 +3067,7 @@ dependencies = [
  "tower 0.5.3",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
