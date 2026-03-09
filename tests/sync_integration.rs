@@ -8,21 +8,32 @@ use tokio::sync::RwLock;
 
 #[tokio::test]
 async fn test_sync_integration_state_roundtrip() {
-    let doc = Arc::new(RwLock::new(CrdtDocument::new()));
+    let doc = Arc::new(RwLock::new(CrdtDocument::new("peer1".to_string())));
 
-    let state = doc.read().await.get_state();
+    // Add some data
+    let mut rates = HashMap::new();
+    rates.insert("EUR".to_string(), 0.92);
+    let rate_collection = RateCollection {
+        base_code: "USD".to_string(),
+        rates: rates.clone(),
+        timestamp: chrono::Utc::now(),
+        source: Source::Frankfurter,
+    };
+    doc.write().await.update_rates(&rate_collection).unwrap();
 
-    let mut doc2 = CrdtDocument::new();
-    doc2.apply_state(&state).unwrap();
+    // Serialize and deserialize
+    let state = doc.read().await.to_bytes();
+    let doc2 = CrdtDocument::from_bytes("peer2".to_string(), &state).unwrap();
 
-    let state2 = doc2.get_state();
-
-    assert_eq!(state, state2);
+    // Verify data is preserved (not exact bytes, but the content)
+    let rates1 = doc.read().await.get_rates().unwrap();
+    let rates2 = doc2.get_rates().unwrap();
+    assert_eq!(rates1.rates.get("EUR"), rates2.rates.get("EUR"));
 }
 
 #[tokio::test]
 async fn test_crdt_document_update_and_get() {
-    let mut doc = CrdtDocument::new();
+    let mut doc = CrdtDocument::new("peer1".to_string());
 
     let mut rates = HashMap::new();
     rates.insert("EUR".to_string(), 0.85);
@@ -46,7 +57,7 @@ async fn test_crdt_document_update_and_get() {
 
 #[tokio::test]
 async fn test_crdt_document_serialization() {
-    let mut doc = CrdtDocument::new();
+    let mut doc = CrdtDocument::new("peer1".to_string());
 
     let mut rates = HashMap::new();
     rates.insert("EUR".to_string(), 0.92);
@@ -60,12 +71,11 @@ async fn test_crdt_document_serialization() {
 
     doc.update_rates(&rate_collection).unwrap();
 
-    let state = doc.get_state();
-
+    let state = doc.to_bytes();
     assert!(!state.is_empty());
 
-    let mut doc2 = CrdtDocument::new();
-    doc2.apply_state(&state).unwrap();
+    // Load into a new document and verify data is preserved
+    let doc2 = CrdtDocument::from_bytes("peer2".to_string(), &state).unwrap();
 
     let retrieved = doc2.get_rates().unwrap();
     assert_eq!(retrieved.base_code, "USD");
@@ -74,7 +84,7 @@ async fn test_crdt_document_serialization() {
 
 #[tokio::test]
 async fn test_sync_integration_on_cache_update() {
-    let doc = Arc::new(RwLock::new(CrdtDocument::new()));
+    let doc = Arc::new(RwLock::new(CrdtDocument::new("peer1".to_string())));
     let cache = Arc::new(MemoryCache::new(100, Duration::from_secs(300)));
 
     let sync = SyncIntegration::new(doc.clone(), cache.clone());
@@ -99,7 +109,7 @@ async fn test_sync_integration_on_cache_update() {
 
 #[tokio::test]
 async fn test_sync_integration_on_sync_update() {
-    let doc = Arc::new(RwLock::new(CrdtDocument::new()));
+    let doc = Arc::new(RwLock::new(CrdtDocument::new("peer1".to_string())));
     let cache = Arc::new(MemoryCache::new(100, Duration::from_secs(300)));
 
     let mut rates = HashMap::new();
@@ -127,7 +137,7 @@ async fn test_sync_integration_on_sync_update() {
 
 #[tokio::test]
 async fn test_reconciler_updates_stale_cache() {
-    let doc = Arc::new(RwLock::new(CrdtDocument::new()));
+    let doc = Arc::new(RwLock::new(CrdtDocument::new("peer1".to_string())));
     let cache = Arc::new(MemoryCache::new(100, Duration::from_secs(300)));
 
     let old_time = chrono::Utc::now() - chrono::Duration::seconds(10);
@@ -170,7 +180,7 @@ async fn test_reconciler_updates_stale_cache() {
 
 #[tokio::test]
 async fn test_reconciler_handles_missing_cache() {
-    let doc = Arc::new(RwLock::new(CrdtDocument::new()));
+    let doc = Arc::new(RwLock::new(CrdtDocument::new("peer1".to_string())));
     let cache = Arc::new(MemoryCache::new(100, Duration::from_secs(300)));
 
     let mut rates = HashMap::new();

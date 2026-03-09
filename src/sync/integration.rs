@@ -42,14 +42,14 @@ impl SyncIntegration {
         Ok(())
     }
 
-    pub async fn get_document_state(&self) -> Vec<u8> {
-        let doc = self.document.read().await;
-        doc.get_state()
+    pub async fn get_document_changes(&self) -> Vec<u8> {
+        let mut doc = self.document.write().await;
+        doc.get_changes_since()
     }
 
-    pub async fn apply_document_state(&self, state: &[u8]) -> SyncResult<()> {
+    pub async fn apply_document_changes(&self, changes: &[u8]) -> SyncResult<()> {
         let mut doc = self.document.write().await;
-        doc.apply_state(state)?;
+        doc.apply_changes(changes)?;
         Ok(())
     }
 }
