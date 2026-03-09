@@ -99,9 +99,9 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration referenc
 
 - **Binary**: Single static binary
 - **Docker**: Multi-platform images
-- **Docker Compose**: Complete stack with monitoring
-- **Kubernetes**: Helm chart with HPA, PDB, ServiceMonitor
-- **AWS ECS**: Terraform modules with Fargate, ALB, EFS
+- **Docker Compose**: Stack with Prometheus and Grafana
+- **Kubernetes**: Helm chart
+- **AWS ECS**: Terraform modules
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment guides.
 
