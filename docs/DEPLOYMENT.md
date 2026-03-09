@@ -27,10 +27,6 @@ Environment variables use the prefix `SLOWPOKEAPI__` with `__` as the separator 
 | `SLOWPOKEAPI__LOGGING__FORMAT` | json | Log format (json, pretty) |
 | `SLOWPOKEAPI__CACHE__MAX_CAPACITY` | 10000 | Maximum cache entries |
 | `SLOWPOKEAPI__CACHE__TTL_SECONDS` | 3600 | Cache TTL in seconds |
-| `SLOWPOKEAPI__SYNC__ENABLED` | false | Enable CRDT sync |
-| `SLOWPOKEAPI__SYNC__PEER_ID` | (random UUID) | Unique peer identifier |
-| `SLOWPOKEAPI__SYNC__SYNC_INTERVAL_MS` | 5000 | Sync interval in milliseconds |
-| `SLOWPOKEAPI__SYNC__PEER_TIMEOUT_MS` | 60000 | Peer timeout in milliseconds |
 | `SLOWPOKEAPI__RATE_LIMIT__ENABLED` | true | Enable rate limiting |
 | `SLOWPOKEAPI__AUTH__ENABLED` | false | Enable API key authentication |
 
@@ -53,12 +49,6 @@ database:
 cache:
   max_capacity: 10000
   ttl_seconds: 3600
-
-sync:
-  enabled: false
-  peer_id: "my-peer-001"
-  sync_interval_ms: 5000
-  peer_timeout_ms: 60000
 
 rate_limit:
   enabled: true
