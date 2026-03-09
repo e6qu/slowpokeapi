@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers all deployment options for SlowPokeAPI.
+Deployment options for SlowPokeAPI.
 
 ## Table of Contents
 
@@ -16,46 +16,39 @@ This guide covers all deployment options for SlowPokeAPI.
 
 ### Environment Variables
 
+Environment variables use the prefix `SLOWPOKEAPI__` with `__` as the separator for nested config:
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `API_HOST` | 0.0.0.0 | HTTP API bind address |
-| `API_PORT` | 8081 | HTTP API port |
-| `SYNC_HOST` | 0.0.0.0 | Sync protocol bind address |
-| `SYNC_PORT` | 8082 | Sync protocol port |
-| `DATABASE_URL` | sqlite:data/rates.db | SQLite database path |
-| `LOG_LEVEL` | info | Logging level (error, warn, info, debug, trace) |
-| `LOG_FORMAT` | json | Log format (json, pretty) |
-| `CACHE_MAX_CAPACITY` | 10000 | Maximum cache entries |
-| `CACHE_TTL_SECONDS` | 3600 | Cache TTL in seconds |
-| `SYNC_ENABLED` | false | Enable CRDT sync |
-| `SYNC_PEER_ID` | (random UUID) | Unique peer identifier |
-| `SYNC_INTERVAL_MS` | 5000 | Sync interval in milliseconds |
-| `SYNC_PEER_TIMEOUT_MS` | 60000 | Peer timeout in milliseconds |
-| `RATE_LIMIT_ENABLED` | true | Enable rate limiting |
-| `RATE_LIMIT_GLOBAL_RPS` | 500 | Global requests per second |
-| `RATE_LIMIT_GLOBAL_BURST` | 1000 | Global burst capacity |
-| `RATE_LIMIT_AUTH_RPS` | 50 | Authenticated requests per second |
-| `RATE_LIMIT_AUTH_BURST` | 100 | Authenticated burst capacity |
-| `RATE_LIMIT_ANON_RPS` | 10 | Anonymous requests per second |
-| `RATE_LIMIT_ANON_BURST` | 20 | Anonymous burst capacity |
-| `AUTH_ENABLED` | false | Enable API key authentication |
-| `AUTH_REQUIRE_KEY` | false | Require API key for all requests |
+| `SLOWPOKEAPI__SERVER__HOST` | 0.0.0.0 | HTTP bind address |
+| `SLOWPOKEAPI__SERVER__PORT` | 8080 | HTTP port |
+| `SLOWPOKEAPI__DATABASE__URL` | sqlite::memory: | SQLite database path |
+| `SLOWPOKEAPI__LOGGING__LEVEL` | info | Log level (error, warn, info, debug, trace) |
+| `SLOWPOKEAPI__LOGGING__FORMAT` | json | Log format (json, pretty) |
+| `SLOWPOKEAPI__CACHE__MAX_CAPACITY` | 10000 | Maximum cache entries |
+| `SLOWPOKEAPI__CACHE__TTL_SECONDS` | 3600 | Cache TTL in seconds |
+| `SLOWPOKEAPI__SYNC__ENABLED` | false | Enable CRDT sync |
+| `SLOWPOKEAPI__SYNC__PEER_ID` | (random UUID) | Unique peer identifier |
+| `SLOWPOKEAPI__SYNC__SYNC_INTERVAL_MS` | 5000 | Sync interval in milliseconds |
+| `SLOWPOKEAPI__SYNC__PEER_TIMEOUT_MS` | 60000 | Peer timeout in milliseconds |
+| `SLOWPOKEAPI__RATE_LIMIT__ENABLED` | true | Enable rate limiting |
+| `SLOWPOKEAPI__AUTH__ENABLED` | false | Enable API key authentication |
 
 ### Configuration File
 
-You can also use a YAML configuration file:
+Configuration can also be loaded from a YAML file:
 
 ```yaml
 server:
   host: 0.0.0.0
-  port: 8081
+  port: 8080
 
 logging:
   level: info
   format: json
 
 database:
-  url: sqlite:data/rates.db
+  url: sqlite::memory:
 
 cache:
   max_capacity: 10000
@@ -69,49 +62,36 @@ sync:
 
 rate_limit:
   enabled: true
-  global_requests_per_second: 500
-  global_burst_capacity: 1000
-  authenticated_requests_per_second: 50
-  authenticated_burst_capacity: 100
-  anonymous_requests_per_second: 10
-  anonymous_burst_capacity: 20
 
 auth:
   enabled: false
-  require_api_key: false
-  public_paths:
-    - /health
-    - /metrics
 ```
+
+Load with: `./slowpokeapi --config /etc/slowpokeapi/config.yaml`
 
 ## Binary Deployment
 
 ### Prerequisites
 
-- Rust 1.75+ 
+- Rust 1.75+
 - SQLite 3
-- Linux, macOS, or Windows
 
 ### Build from Source
 
 ```bash
-# Clone repository
 git clone https://github.com/e6qu/slowpokeapi.git
 cd slowpokeapi
-
-# Build release binary
 cargo build --release
-
-# Binary location
-./target/release/slowpokeapi
 ```
+
+Binary location: `./target/release/slowpokeapi`
 
 ### Run Binary
 
 ```bash
 # With environment variables
-export DATABASE_URL=sqlite:/var/lib/slowpokeapi/rates.db
-export API_PORT=8081
+export SLOWPOKEAPI__DATABASE__URL=sqlite:/var/lib/slowpokeapi/rates.db
+export SLOWPOKEAPI__SERVER__PORT=8080
 ./target/release/slowpokeapi
 
 # Or with config file
@@ -132,9 +112,9 @@ Type=simple
 User=slowpokeapi
 Group=slowpokeapi
 WorkingDirectory=/var/lib/slowpokeapi
-Environment="DATABASE_URL=sqlite:/var/lib/slowpokeapi/rates.db"
-Environment="API_PORT=8081"
-Environment="LOG_LEVEL=info"
+Environment="SLOWPOKEAPI__DATABASE__URL=sqlite:/var/lib/slowpokeapi/rates.db"
+Environment="SLOWPOKEAPI__SERVER__PORT=8080"
+Environment="SLOWPOKEAPI__LOGGING__LEVEL=info"
 ExecStart=/usr/local/bin/slowpokeapi
 Restart=always
 RestartSec=5
@@ -158,8 +138,7 @@ sudo systemctl start slowpokeapi
 ```bash
 docker run -d \
   --name slowpokeapi \
-  -p 8081:8081 \
-  -p 8082:8082 \
+  -p 8080:8080 \
   -v slowpokeapi-data:/data \
   ghcr.io/e6qu/slowpokeapi:latest
 ```
@@ -169,12 +148,10 @@ docker run -d \
 ```bash
 docker run -d \
   --name slowpokeapi \
-  -p 8081:8081 \
-  -p 8082:8082 \
+  -p 8080:8080 \
   -v $(pwd)/data:/data \
-  -e DATABASE_URL=sqlite:/data/rates.db \
-  -e LOG_LEVEL=debug \
-  -e RATE_LIMIT_ENABLED=true \
+  -e SLOWPOKEAPI__DATABASE__URL=sqlite:/data/rates.db \
+  -e SLOWPOKEAPI__LOGGING__LEVEL=debug \
   ghcr.io/e6qu/slowpokeapi:latest
 ```
 
@@ -182,7 +159,7 @@ docker run -d \
 
 ```bash
 docker build -t slowpokeapi:local .
-docker run -p 8081:8081 slowpokeapi:local
+docker run -p 8080:8080 slowpokeapi:local
 ```
 
 ## Docker Compose
@@ -196,17 +173,16 @@ services:
   slowpokeapi:
     image: ghcr.io/e6qu/slowpokeapi:latest
     ports:
-      - "8081:8081"
-      - "8082:8082"
+      - "8080:8080"
     volumes:
       - slowpokeapi-data:/data
     environment:
-      - DATABASE_URL=sqlite:/data/rates.db
-      - LOG_LEVEL=info
-      - RATE_LIMIT_ENABLED=true
-      - AUTH_ENABLED=false
+      - SLOWPOKEAPI__DATABASE__URL=sqlite:/data/rates.db
+      - SLOWPOKEAPI__LOGGING__LEVEL=info
+      - SLOWPOKEAPI__RATE_LIMIT__ENABLED=true
+      - SLOWPOKEAPI__AUTH__ENABLED=false
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -255,24 +231,17 @@ docker-compose up -d
 ### Install Chart
 
 ```bash
-# Add Helm repository (if published)
-helm repo add slowpokeapi https://e6qu.github.io/slowpokeapi
-helm repo update
-
-# Install
-helm install slowpokeapi slowpokeapi/slowpokeapi
-
-# Or install from local chart
+# Install from local chart
 helm install slowpokeapi ./deploy/helm/slowpokeapi
 ```
 
 ### Basic Deployment
 
 ```bash
-# Default deployment (stateless)
+# Default deployment
 helm install slowpokeapi ./deploy/helm/slowpokeapi
 
-# With persistence (StatefulSet)
+# With persistence
 helm install slowpokeapi ./deploy/helm/slowpokeapi \
   --set persistence.enabled=true \
   --set persistence.size=10Gi
@@ -281,7 +250,6 @@ helm install slowpokeapi ./deploy/helm/slowpokeapi \
 ### Production Deployment
 
 ```bash
-# Use production values
 helm install slowpokeapi ./deploy/helm/slowpokeapi \
   -f ./deploy/helm/slowpokeapi/values-prod.yaml \
   --set ingress.enabled=true \
@@ -389,7 +357,7 @@ Add to `prometheus.yml`:
 scrape_configs:
   - job_name: 'slowpokeapi'
     static_configs:
-      - targets: ['localhost:8081']
+      - targets: ['localhost:8080']
     metrics_path: /metrics
 ```
 
@@ -406,10 +374,10 @@ Import `deploy/grafana/dashboard.json`:
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /health` | Combined health status |
-| `GET /healthz` | Kubernetes liveness probe |
-| `GET /readyz` | Kubernetes readiness probe |
-| `GET /livez` | Kubernetes liveness probe |
+| `GET /health` | Deep health check with database status |
+| `GET /healthz` | Liveness probe (returns "ok") |
+| `GET /readyz` | Readiness probe (checks database) |
+| `GET /livez` | Liveness probe (returns "ok") |
 
 ### Key Metrics
 
@@ -417,8 +385,8 @@ Import `deploy/grafana/dashboard.json`:
 |--------|-------------|
 | `slowpokeapi_requests_total` | Total HTTP requests |
 | `slowpokeapi_request_duration_seconds` | Request latency |
-| `slowpokeapi_sync_operations_total` | CRDT sync operations |
-| `slowpokeapi_peers_connected` | Connected peers |
+| `slowpokeapi_cache_hits_total` | Cache hits |
+| `slowpokeapi_cache_misses_total` | Cache misses |
 
 ## Troubleshooting
 
@@ -434,15 +402,11 @@ chown -R slowpokeapi:slowpokeapi /var/lib/slowpokeapi
 
 ```bash
 # Check if port is in use
-lsof -i :8081
+lsof -i :8080
 
 # Use different port
-export API_PORT=9090
+export SLOWPOKEAPI__SERVER__PORT=9090
 ```
-
-### Sync Issues
-
-Ensure port 8082 is open between instances for CRDT synchronization.
 
 ### Rate Limiting
 
