@@ -1,5 +1,4 @@
 use crate::storage::ApiKeyStore;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -398,8 +397,7 @@ impl RateLimiter {
             return duration;
         }
 
-        let mut rng = rand::thread_rng();
-        let jitter_secs = rng.gen_range(0..=self.config.jitter_max_seconds);
+        let jitter_secs = rand::random_range(0..=self.config.jitter_max_seconds);
         duration + Duration::from_secs(jitter_secs)
     }
 

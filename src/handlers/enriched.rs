@@ -1,9 +1,13 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
+use std::collections::HashMap;
 
 use crate::cache::Cache;
-use crate::models::{CurrencyMetadata, EnrichedResponse, ResponseResult};
+use crate::models::{
+    CurrencyMetadata, DataSourceInfo, EnrichedResponse, ResponseResult, UpstreamRequestInfo,
+};
 use crate::server::AppState;
 
 fn get_metadata(code: &str) -> Option<CurrencyMetadata> {
@@ -152,14 +156,21 @@ pub async fn get_enriched(
 
     let cache_key = format!("enriched:{base}:{target}");
 
+    // Try cache with metadata first
     if let Some(ref cache) = state.rate_cache {
-        match cache.get(&cache_key).await {
-            Ok(Some(rates)) => {
-                let rate = rates.rates.get(&target).copied().ok_or((
+        match cache.get_with_metadata(&cache_key).await {
+            Ok(Some(cache_result)) => {
+                let rate = cache_result.value.rates.get(&target).copied().ok_or((
                     StatusCode::NOT_FOUND,
                     format!("Currency rate not found: {target}"),
                 ))?;
-                return Ok(Json(build_response(&base, rate, target_metadata)));
+                let source_str = cache_result.value.source.to_string();
+                return Ok(Json(build_response(
+                    &base,
+                    rate,
+                    target_metadata,
+                    build_data_source_info_from_cache(&source_str, &cache_result),
+                )));
             }
             Ok(None) => {}
             Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
@@ -182,15 +193,107 @@ pub async fn get_enriched(
                 StatusCode::NOT_FOUND,
                 format!("Currency rate not found: {target}"),
             ))?;
+            let source_str = rates.source.to_string();
+            let upstream_request = build_upstream_request(&source_str, &base);
 
             if let Some(ref cache) = state.rate_cache {
-                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                if let Err(e) = cache
+                    .set_with_metadata(
+                        cache_key,
+                        rates.clone(),
+                        crate::cache::UpstreamRequestDetails {
+                            endpoint: upstream_request.endpoint.clone(),
+                            method: upstream_request
+                                .method
+                                .clone()
+                                .unwrap_or_else(|| "GET".to_string()),
+                            headers: upstream_request.headers.clone(),
+                            payload: upstream_request.payload.clone(),
+                        },
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("Cache set error: {}", e);
                 }
             }
-            Ok(Json(build_response(&base, rate, target_metadata)))
+            Ok(Json(build_response(
+                &base,
+                rate,
+                target_metadata,
+                build_data_source_info_fresh(&source_str, upstream_request),
+            )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+fn build_upstream_request(source: &str, base: &str) -> UpstreamRequestInfo {
+    let endpoint = match source {
+        "frankfurter" => format!("https://api.frankfurter.app/latest?from={base}"),
+        "fawazahmed0" => format!(
+            "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{}.json",
+            base.to_lowercase()
+        ),
+        "coingecko" => format!(
+            "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies=usd",
+            base.to_lowercase()
+        ),
+        "coincap" => "https://api.coincap.io/v2/assets".to_string(),
+        _ => "unknown".to_string(),
+    };
+
+    let (method, headers, payload) = match source {
+        "coingecko" | "coincap" => {
+            let mut headers = HashMap::new();
+            headers.insert("Accept".to_string(), "application/json".to_string());
+            (None, Some(headers), None)
+        }
+        _ => (None, None, None),
+    };
+
+    UpstreamRequestInfo {
+        endpoint,
+        method,
+        headers,
+        payload,
+    }
+}
+
+fn build_data_source_info_from_cache(
+    source: &str,
+    cache_result: &crate::cache::CacheResult<crate::models::RateCollection>,
+) -> DataSourceInfo {
+    let upstream_request = UpstreamRequestInfo {
+        endpoint: cache_result.upstream_request.endpoint.clone(),
+        method: if cache_result.upstream_request.method == "GET" {
+            None
+        } else {
+            Some(cache_result.upstream_request.method.clone())
+        },
+        headers: cache_result.upstream_request.headers.clone(),
+        payload: cache_result.upstream_request.payload.clone(),
+    };
+
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved: cache_result.retrieved_at.to_rfc3339(),
+        last_cached: cache_result.cached_at.map(|t| t.to_rfc3339()),
+        upstream_request,
+    }
+}
+
+fn build_data_source_info_fresh(
+    source: &str,
+    upstream_request: UpstreamRequestInfo,
+) -> DataSourceInfo {
+    let now = Utc::now();
+
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved: now.to_rfc3339(),
+        last_cached: None,
+        upstream_request,
     }
 }
 
@@ -198,6 +301,7 @@ fn build_response(
     base_code: &str,
     conversion_rate: f64,
     target_data: CurrencyMetadata,
+    data_source: DataSourceInfo,
 ) -> EnrichedResponse {
     let now = chrono::Utc::now();
 
@@ -209,5 +313,6 @@ fn build_response(
         target_code: target_data.code.clone(),
         conversion_rate,
         target_data,
+        data_source,
     }
 }

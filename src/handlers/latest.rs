@@ -1,11 +1,11 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
+use std::collections::HashMap;
 
 use crate::cache::Cache;
-use crate::models::{
-    is_crypto_code, is_metal_code, LatestRatesResponse, RateCollection, ResponseResult,
-};
+use crate::models::{DataSourceInfo, LatestRatesResponse, ResponseResult, UpstreamRequestInfo};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -42,9 +42,16 @@ pub async fn get_latest(
 
     let cache_key = format!("latest:{base}");
 
+    // Try cache with metadata first
     if let Some(ref cache) = state.rate_cache {
-        match cache.get(&cache_key).await {
-            Ok(Some(rates)) => return Ok(Json(build_response(&rates))),
+        match cache.get_with_metadata(&cache_key).await {
+            Ok(Some(cache_result)) => {
+                let source_str = cache_result.value.source.to_string();
+                return Ok(Json(build_response(
+                    &cache_result.value,
+                    build_data_source_info_from_cache(&source_str, &cache_result),
+                )));
+            }
             Ok(None) => {}
             Err(e) => tracing::warn!("Cache get error for {}: {}", cache_key, e),
         }
@@ -62,19 +69,120 @@ pub async fn get_latest(
 
     match upstream_manager.get_latest_rates(&base).await {
         Ok(rates) => {
+            let source_str = rates.source.to_string();
+            let upstream_request = build_upstream_request(&source_str, &base);
+
             if let Some(ref cache) = state.rate_cache {
                 let key = cache_key.clone();
-                if let Err(e) = cache.set(cache_key, rates.clone(), None).await {
+                if let Err(e) = cache
+                    .set_with_metadata(
+                        cache_key,
+                        rates.clone(),
+                        crate::cache::UpstreamRequestDetails {
+                            endpoint: upstream_request.endpoint.clone(),
+                            method: upstream_request
+                                .method
+                                .clone()
+                                .unwrap_or_else(|| "GET".to_string()),
+                            headers: upstream_request.headers.clone(),
+                            payload: upstream_request.payload.clone(),
+                        },
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("Cache set error for {}: {}", key, e);
                 }
             }
-            Ok(Json(build_response(&rates)))
+            Ok(Json(build_response(
+                &rates,
+                build_data_source_info_fresh(&source_str, upstream_request),
+            )))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_response(rates: &RateCollection) -> LatestRatesResponse {
+fn build_upstream_request(source: &str, base: &str) -> UpstreamRequestInfo {
+    let endpoint = match source {
+        "frankfurter" => format!("https://api.frankfurter.app/latest?from={base}"),
+        "fawazahmed0" => format!(
+            "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{}.json",
+            base.to_lowercase()
+        ),
+        "coingecko" => format!(
+            "https://api.coingecko.com/api/v3/simple/price?ids={}&vs_currencies=usd",
+            base.to_lowercase()
+        ),
+        "coincap" => "https://api.coincap.io/v2/assets".to_string(),
+        _ => "unknown".to_string(),
+    };
+
+    // Determine if non-GET method or special headers/payload needed
+    let (method, headers, payload) = match source {
+        "coingecko" => {
+            // CoinGecko often requires API key header for higher rate limits
+            let mut headers = HashMap::new();
+            headers.insert("Accept".to_string(), "application/json".to_string());
+            (None, Some(headers), None)
+        }
+        "coincap" => {
+            let mut headers = HashMap::new();
+            headers.insert("Accept".to_string(), "application/json".to_string());
+            (None, Some(headers), None)
+        }
+        _ => (None, None, None), // Standard GET request
+    };
+
+    UpstreamRequestInfo {
+        endpoint,
+        method,
+        headers,
+        payload,
+    }
+}
+
+fn build_data_source_info_from_cache<V>(
+    source: &str,
+    cache_result: &crate::cache::CacheResult<V>,
+) -> DataSourceInfo {
+    let upstream_request = UpstreamRequestInfo {
+        endpoint: cache_result.upstream_request.endpoint.clone(),
+        method: if cache_result.upstream_request.method == "GET" {
+            None
+        } else {
+            Some(cache_result.upstream_request.method.clone())
+        },
+        headers: cache_result.upstream_request.headers.clone(),
+        payload: cache_result.upstream_request.payload.clone(),
+    };
+
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved: cache_result.retrieved_at.to_rfc3339(),
+        last_cached: cache_result.cached_at.map(|t| t.to_rfc3339()),
+        upstream_request,
+    }
+}
+
+fn build_data_source_info_fresh(
+    source: &str,
+    upstream_request: UpstreamRequestInfo,
+) -> DataSourceInfo {
+    let now = Utc::now();
+
+    DataSourceInfo {
+        source: source.to_string(),
+        last_retrieved: now.to_rfc3339(),
+        last_cached: None,
+        upstream_request,
+    }
+}
+
+fn build_response(
+    rates: &crate::models::RateCollection,
+    data_source: DataSourceInfo,
+) -> LatestRatesResponse {
     let now = chrono::Utc::now();
     let next_update = now + chrono::Duration::hours(24);
 
@@ -87,5 +195,8 @@ fn build_response(rates: &RateCollection) -> LatestRatesResponse {
         time_next_update_utc: next_update.to_rfc3339(),
         base_code: rates.base_code.clone(),
         conversion_rates: rates.rates.clone(),
+        data_source,
     }
 }
+
+use crate::models::{is_crypto_code, is_metal_code};

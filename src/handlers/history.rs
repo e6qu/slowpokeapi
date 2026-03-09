@@ -1,10 +1,9 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use chrono::Utc;
 
-use crate::models::{
-    is_crypto_code, is_metal_code, HistoricalRate, HistoricalResponse, ResponseResult,
-};
+use crate::models::{DataSourceInfo, HistoricalResponse, ResponseResult, UpstreamRequestInfo};
 use crate::server::AppState;
 
 const DOCUMENTATION_URL: &str = "https://github.com/e6qu/slowpokeapi";
@@ -83,12 +82,34 @@ pub async fn get_history(
     };
 
     match upstream_manager.get_historical_rates(&base, date).await {
-        Ok(rates) => Ok(Json(build_response(&rates, year, month, day))),
+        Ok(rates) => Ok(Json(build_response(&rates, year, month, day, &base))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
 
-fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> HistoricalResponse {
+fn build_response(
+    rates: &crate::models::HistoricalRate,
+    year: i32,
+    month: u32,
+    day: u32,
+    base: &str,
+) -> HistoricalResponse {
+    let now = Utc::now();
+
+    // Historical rates only come from Frankfurter
+    let upstream_request = UpstreamRequestInfo {
+        endpoint: format!(
+            "https://api.frankfurter.app/{}?from={}",
+            chrono::NaiveDate::from_ymd_opt(year, month, day)
+                .map(|d| d.to_string())
+                .unwrap_or_default(),
+            base
+        ),
+        method: None, // GET is default
+        headers: None,
+        payload: None,
+    };
+
     HistoricalResponse {
         result: ResponseResult::Success,
         documentation: DOCUMENTATION_URL.to_string(),
@@ -98,5 +119,13 @@ fn build_response(rates: &HistoricalRate, year: i32, month: u32, day: u32) -> Hi
         base_code: rates.base_code.clone(),
         conversion_rates: rates.rates.clone(),
         conversion_results: None,
+        data_source: DataSourceInfo {
+            source: "frankfurter".to_string(),
+            last_retrieved: now.to_rfc3339(),
+            last_cached: None,
+            upstream_request,
+        },
     }
 }
+
+use crate::models::{is_crypto_code, is_metal_code};
