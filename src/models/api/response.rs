@@ -7,16 +7,11 @@ use utoipa::ToSchema;
 pub struct DataSourceInfo {
     /// Name of the upstream data source (e.g., "frankfurter", "coingecko")
     pub source: String,
-    /// When the data was last retrieved from upstream (Unix timestamp)
-    pub last_retrieved_unix: i64,
     /// When the data was last retrieved from upstream (UTC RFC3339)
-    pub last_retrieved_utc: String,
-    /// When the data was last cached (Unix timestamp), null if not cached
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_cached_unix: Option<i64>,
+    pub last_retrieved: String,
     /// When the data was last cached (UTC RFC3339), null if not cached
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_cached_utc: Option<String>,
+    pub last_cached: Option<String>,
     /// Upstream API call details
     pub upstream_request: UpstreamRequestInfo,
 }

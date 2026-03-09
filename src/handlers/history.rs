@@ -121,10 +121,8 @@ fn build_response(
         conversion_results: None,
         data_source: DataSourceInfo {
             source: "frankfurter".to_string(),
-            last_retrieved_unix: now.timestamp(),
-            last_retrieved_utc: now.to_rfc3339(),
-            last_cached_unix: None,
-            last_cached_utc: None,
+            last_retrieved: now.to_rfc3339(),
+            last_cached: None,
             upstream_request,
         },
     }

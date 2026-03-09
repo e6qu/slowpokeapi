@@ -159,10 +159,8 @@ fn build_data_source_info_from_cache<V>(
 
     DataSourceInfo {
         source: source.to_string(),
-        last_retrieved_unix: cache_result.retrieved_at.timestamp(),
-        last_retrieved_utc: cache_result.retrieved_at.to_rfc3339(),
-        last_cached_unix: cache_result.cached_at.map(|t| t.timestamp()),
-        last_cached_utc: cache_result.cached_at.map(|t| t.to_rfc3339()),
+        last_retrieved: cache_result.retrieved_at.to_rfc3339(),
+        last_cached: cache_result.cached_at.map(|t| t.to_rfc3339()),
         upstream_request,
     }
 }
@@ -175,10 +173,8 @@ fn build_data_source_info_fresh(
 
     DataSourceInfo {
         source: source.to_string(),
-        last_retrieved_unix: now.timestamp(),
-        last_retrieved_utc: now.to_rfc3339(),
-        last_cached_unix: None,
-        last_cached_utc: None,
+        last_retrieved: now.to_rfc3339(),
+        last_cached: None,
         upstream_request,
     }
 }
