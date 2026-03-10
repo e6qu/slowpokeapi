@@ -31,7 +31,7 @@ automerge = "0.5"
 tokio-tungstenite = { version = "0.28", features = ["rustls-tls-native-roots"] }
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
-bincode = "1"
+bincode = "3"
 rand = "0.9"
 
 [dev-dependencies]
