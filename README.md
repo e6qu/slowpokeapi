@@ -3,12 +3,13 @@
 Currency exchange rate API built in Rust.
 
 [![CI](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-75%25-brightgreen.svg)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
+[![Test](https://img.shields.io/github/actions/workflow/status/e6qu/slowpokeapi/ci.yml?logo=github&label=test&branch=main)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/github/actions/workflow/status/e6qu/slowpokeapi/ci.yml?logo=codecov&label=coverage&branch=main)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/e6qu/slowpokeapi/ci.yml?logo=shield&label=security&branch=main)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-AGPL--3.0%20or%20MIT-blue.svg)](LICENSE)
 [![Rust Version](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
-[![Security Audit](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml/badge.svg?branch=main&event=push&label=audit)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
 
-**Lines of Code:** ~15,000 | **Test Coverage:** ~75% | **Binary Size:** ~8MB
+**Lines of Code:** ~15,000 | **Binary Size:** ~8MB
 
 ## Features
 
