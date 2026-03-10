@@ -3,7 +3,7 @@
 Currency exchange rate API built in Rust.
 
 [![CI](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/gh/e6qu/slowpokeapi/branch/main/graph/badge.svg)](https://codecov.io/gh/e6qu/slowpokeapi)
+[![Coverage](https://img.shields.io/badge/coverage-75%25-brightgreen.svg)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-AGPL--3.0%20or%20MIT-blue.svg)](LICENSE)
 [![Rust Version](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 [![Security Audit](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml/badge.svg?branch=main&event=push&label=audit)](https://github.com/e6qu/slowpokeapi/actions/workflows/ci.yml)
